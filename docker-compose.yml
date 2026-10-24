@@ -1,0 +1,123 @@
+# Avvio:            docker compose up --build            -> http://localhost:8080
+# Con modelli reali: LLM_MODE=live nel file .env, poi   docker compose --profile live up --build
+# Con Ollama locale: docker compose --profile live --profile local-llm up --build
+name: ananke
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ananke}:${POSTGRES_PASSWORD:-ananke-dev-password}@db:5432/${POSTGRES_DB:-ananke}
+  LLM_MODE: ${LLM_MODE:-mock}
+  LLM_BASE_URL: http://gateway:4000/v1
+  LLM_API_KEY: ${LITELLM_MASTER_KEY:-sk-ananke-local-change-me}
+  LLM_ADMIN_URL: http://gateway:4000
+  APP_TIMEZONE: ${APP_TIMEZONE:-Europe/Rome}
+  WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-30}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ananke}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ananke-dev-password}
+      POSTGRES_DB: ${POSTGRES_DB:-ananke}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ananke} -d ${POSTGRES_DB:-ananke}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      additional_contexts:
+        certs: ./certs
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      additional_contexts:
+        certs: ./certs
+    command: ["python", "-m", "app.worker"]
+    environment: *backend-env
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: frontend
+      additional_contexts:
+        certs: ./certs
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Crea, se manca, il database "litellm" in cui il gateway salva i modelli sincronizzati dal worker
+  gateway-db-init:
+    image: postgres:17-alpine
+    profiles: ["live"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-ananke}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-ananke-dev-password}
+      PGDATABASE: ${POSTGRES_DB:-ananke}
+    command: ["sh", "-c", "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='litellm'\" | grep -q 1 || psql -c 'CREATE DATABASE litellm'"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # Gateway verso i modelli: serve solo con LLM_MODE=live (profilo "live").
+  # I modelli arrivano dal catalogo LLM di Ananke; le chiavi dal file .env (ogni variabile citata nella scheda «Modelli AI»).
+  gateway:
+    image: ghcr.io/berriai/litellm:main-stable
+    profiles: ["live"]
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-sk-ananke-local-change-me}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-sk-ananke-salt-change-me}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ananke}:${POSTGRES_PASSWORD:-ananke-dev-password}@db:5432/litellm
+      STORE_MODEL_IN_DB: "True"
+    volumes:
+      - ./gateway/litellm.config.yaml:/app/config.yaml:ro
+    depends_on:
+      gateway-db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Modelli open in locale (profilo "local-llm"). Per la GPU NVIDIA vedi docs/sviluppo.md
+  ollama:
+    image: ollama/ollama
+    profiles: ["local-llm"]
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  ollama:

@@ -1,0 +1,951 @@
+{
+  "id": "waterfall-e2e",
+  "name": "Pipeline waterfall end-to-end",
+  "methodology": "waterfall",
+  "version": "1.1.0",
+  "description": "Ciclo di vita del software sequenziale con gate formali tra le fasi",
+  "roles": [
+    {
+      "id": "sponsor",
+      "name": "Sponsor",
+      "description": "Finanzia il progetto e approva i gate principali"
+    },
+    {
+      "id": "client",
+      "name": "Cliente / Utente chiave",
+      "description": "Fornisce i requisiti ed esegue l'UAT"
+    },
+    {
+      "id": "pm",
+      "name": "Project Manager",
+      "description": "Pianifica, controlla e chiude il progetto"
+    },
+    {
+      "id": "ba",
+      "name": "Business Analyst",
+      "description": "Raccoglie e formalizza i requisiti"
+    },
+    {
+      "id": "architect",
+      "name": "Architetto software",
+      "description": "Responsabile delle scelte architetturali e del design"
+    },
+    {
+      "id": "dev",
+      "name": "Sviluppatore",
+      "description": "Implementa e testa a livello unitario"
+    },
+    {
+      "id": "qa",
+      "name": "QA / Tester",
+      "description": "Pianifica ed esegue i test"
+    },
+    {
+      "id": "ops",
+      "name": "Operations / DevOps",
+      "description": "Gestisce rilascio ed esercizio"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "business-case",
+      "name": "Business Case",
+      "type": "document",
+      "owner": "sponsor"
+    },
+    {
+      "id": "project-charter",
+      "name": "Project Charter",
+      "type": "document",
+      "owner": "pm"
+    },
+    {
+      "id": "pm-plan",
+      "name": "Project Management Plan",
+      "type": "plan",
+      "owner": "pm",
+      "description": "WBS, cronoprogramma, budget, rischi, qualità, comunicazione"
+    },
+    {
+      "id": "srs",
+      "name": "Software Requirements Specification",
+      "type": "document",
+      "owner": "ba"
+    },
+    {
+      "id": "traceability-matrix",
+      "name": "Matrice di tracciabilità",
+      "type": "document",
+      "owner": "ba"
+    },
+    {
+      "id": "sdd",
+      "name": "Software Design Document",
+      "type": "document",
+      "owner": "architect",
+      "description": "Architettura (HLD), design di dettaglio (LLD), modello dati, interfacce"
+    },
+    {
+      "id": "test-plan",
+      "name": "Test Plan",
+      "type": "plan",
+      "owner": "qa"
+    },
+    {
+      "id": "source-code",
+      "name": "Codice sorgente",
+      "type": "code",
+      "owner": "dev"
+    },
+    {
+      "id": "build",
+      "name": "Build versionata",
+      "type": "build",
+      "owner": "dev"
+    },
+    {
+      "id": "test-report",
+      "name": "Test Report",
+      "type": "report",
+      "owner": "qa"
+    },
+    {
+      "id": "defect-log",
+      "name": "Registro difetti",
+      "type": "log",
+      "owner": "qa"
+    },
+    {
+      "id": "release-notes",
+      "name": "Release Notes",
+      "type": "document",
+      "owner": "ops"
+    },
+    {
+      "id": "user-manual",
+      "name": "Manuale utente",
+      "type": "document",
+      "owner": "ba"
+    },
+    {
+      "id": "runbook",
+      "name": "Runbook operativo",
+      "type": "document",
+      "owner": "ops"
+    },
+    {
+      "id": "change-log",
+      "name": "Registro change request",
+      "type": "log",
+      "owner": "pm"
+    },
+    {
+      "id": "lessons-learned",
+      "name": "Lessons Learned",
+      "type": "document",
+      "owner": "pm"
+    },
+    {
+      "id": "closure-report",
+      "name": "Project Closure Report",
+      "type": "report",
+      "owner": "pm"
+    }
+  ],
+  "stages": [
+    {
+      "id": "initiation",
+      "name": "Avvio",
+      "order": 0,
+      "kind": "phase",
+      "inputs": [],
+      "activities": [
+        {
+          "id": "business-case-dev",
+          "name": "Redazione business case",
+          "raci": {
+            "R": [
+              "ba",
+              "pm"
+            ],
+            "A": "sponsor",
+            "C": [
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "feasibility",
+          "name": "Studio di fattibilità",
+          "raci": {
+            "R": [
+              "pm",
+              "architect"
+            ],
+            "A": "sponsor",
+            "C": [
+              "ba"
+            ]
+          }
+        },
+        {
+          "id": "stakeholder-analysis",
+          "name": "Analisi stakeholder",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor",
+            "I": [
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "charter-dev",
+          "name": "Redazione Project Charter",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor"
+          }
+        }
+      ],
+      "outputs": [
+        "business-case",
+        "project-charter"
+      ],
+      "gate": {
+        "id": "g0-project-approval",
+        "name": "Approvazione progetto",
+        "criteria": [
+          "Business case approvato",
+          "Fattibilità tecnica ed economica confermata",
+          "Sponsor e PM nominati"
+        ],
+        "approvers": [
+          "sponsor"
+        ]
+      }
+    },
+    {
+      "id": "planning",
+      "name": "Pianificazione",
+      "order": 1,
+      "kind": "phase",
+      "inputs": [
+        "project-charter"
+      ],
+      "activities": [
+        {
+          "id": "wbs",
+          "name": "Work Breakdown Structure",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "pm",
+            "C": [
+              "architect",
+              "ba"
+            ]
+          }
+        },
+        {
+          "id": "schedule",
+          "name": "Cronoprogramma (Gantt)",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "pm"
+          }
+        },
+        {
+          "id": "budget",
+          "name": "Stima costi e budget",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor"
+          }
+        },
+        {
+          "id": "risk-plan",
+          "name": "Piano di gestione dei rischi",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "pm",
+            "C": [
+              "architect",
+              "ops"
+            ]
+          }
+        },
+        {
+          "id": "quality-comm-plan",
+          "name": "Piano qualità e comunicazione",
+          "raci": {
+            "R": [
+              "pm",
+              "qa"
+            ],
+            "A": "pm"
+          }
+        }
+      ],
+      "outputs": [
+        "pm-plan"
+      ],
+      "gate": {
+        "id": "g1-baseline",
+        "name": "Baseline approvata",
+        "criteria": [
+          "Ambito, tempi e costi in baseline",
+          "Rischi principali identificati con piano di risposta",
+          "Risorse assegnate"
+        ],
+        "approvers": [
+          "sponsor"
+        ]
+      }
+    },
+    {
+      "id": "requirements",
+      "name": "Analisi dei requisiti",
+      "order": 2,
+      "kind": "phase",
+      "inputs": [
+        "project-charter",
+        "pm-plan"
+      ],
+      "activities": [
+        {
+          "id": "elicitation",
+          "name": "Raccolta requisiti (interviste, workshop)",
+          "raci": {
+            "R": [
+              "ba"
+            ],
+            "A": "pm",
+            "C": [
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "srs-dev",
+          "name": "Specifica requisiti funzionali e non funzionali",
+          "raci": {
+            "R": [
+              "ba"
+            ],
+            "A": "pm",
+            "C": [
+              "architect",
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "traceability",
+          "name": "Matrice di tracciabilità",
+          "raci": {
+            "R": [
+              "ba"
+            ],
+            "A": "pm",
+            "I": [
+              "qa"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "srs",
+        "traceability-matrix"
+      ],
+      "gate": {
+        "id": "g2-requirements-signoff",
+        "name": "Sign-off requisiti",
+        "criteria": [
+          "Requisiti completi, univoci e verificabili",
+          "Ogni requisito ha un ID tracciabile",
+          "Requisiti approvati dal cliente"
+        ],
+        "approvers": [
+          "client",
+          "sponsor"
+        ]
+      }
+    },
+    {
+      "id": "design",
+      "name": "Progettazione",
+      "order": 3,
+      "kind": "phase",
+      "inputs": [
+        "srs",
+        "traceability-matrix"
+      ],
+      "activities": [
+        {
+          "id": "hld",
+          "name": "Architettura (High-Level Design)",
+          "raci": {
+            "R": [
+              "architect"
+            ],
+            "A": "architect",
+            "C": [
+              "ops"
+            ]
+          }
+        },
+        {
+          "id": "lld",
+          "name": "Design di dettaglio (Low-Level Design)",
+          "raci": {
+            "R": [
+              "architect",
+              "dev"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "data-model",
+          "name": "Modello dati e interfacce",
+          "raci": {
+            "R": [
+              "architect",
+              "dev"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "test-planning",
+          "name": "Piano di test",
+          "raci": {
+            "R": [
+              "qa"
+            ],
+            "A": "pm",
+            "C": [
+              "ba",
+              "architect"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "sdd",
+        "test-plan"
+      ],
+      "gate": {
+        "id": "g3-design-review",
+        "name": "Design review",
+        "criteria": [
+          "Ogni requisito mappato su componenti di design",
+          "Requisiti non funzionali indirizzati dall'architettura",
+          "Piano di test copre tutti i requisiti"
+        ],
+        "approvers": [
+          "architect",
+          "pm"
+        ]
+      }
+    },
+    {
+      "id": "implementation",
+      "name": "Implementazione",
+      "order": 4,
+      "kind": "phase",
+      "inputs": [
+        "sdd"
+      ],
+      "activities": [
+        {
+          "id": "coding",
+          "name": "Sviluppo",
+          "raci": {
+            "R": [
+              "dev"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "code-review",
+          "name": "Code review",
+          "raci": {
+            "R": [
+              "dev",
+              "architect"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "unit-test",
+          "name": "Unit test",
+          "raci": {
+            "R": [
+              "dev"
+            ],
+            "A": "architect",
+            "I": [
+              "qa"
+            ]
+          }
+        },
+        {
+          "id": "ci-build",
+          "name": "Build e integrazione continua",
+          "raci": {
+            "R": [
+              "dev",
+              "ops"
+            ],
+            "A": "architect"
+          }
+        }
+      ],
+      "outputs": [
+        "source-code",
+        "build"
+      ],
+      "gate": {
+        "id": "g4-code-freeze",
+        "name": "Code freeze",
+        "criteria": [
+          "Funzionalità previste completate",
+          "Unit test superati e copertura minima raggiunta",
+          "Build riproducibile e versionata"
+        ],
+        "approvers": [
+          "architect",
+          "pm"
+        ]
+      }
+    },
+    {
+      "id": "testing",
+      "name": "Integrazione e test",
+      "order": 5,
+      "kind": "phase",
+      "inputs": [
+        "build",
+        "test-plan",
+        "srs"
+      ],
+      "activities": [
+        {
+          "id": "integration-test",
+          "name": "Test di integrazione",
+          "raci": {
+            "R": [
+              "qa"
+            ],
+            "A": "pm",
+            "C": [
+              "dev"
+            ]
+          }
+        },
+        {
+          "id": "system-test",
+          "name": "Test di sistema",
+          "raci": {
+            "R": [
+              "qa"
+            ],
+            "A": "pm"
+          }
+        },
+        {
+          "id": "nfr-test",
+          "name": "Test non funzionali (performance, sicurezza)",
+          "raci": {
+            "R": [
+              "qa",
+              "ops"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "uat",
+          "name": "User Acceptance Test",
+          "raci": {
+            "R": [
+              "client",
+              "qa"
+            ],
+            "A": "client",
+            "I": [
+              "sponsor"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "test-report",
+        "defect-log"
+      ],
+      "gate": {
+        "id": "g5-uat-signoff",
+        "name": "Accettazione (UAT sign-off)",
+        "criteria": [
+          "Nessun difetto bloccante o critico aperto",
+          "Test eseguiti secondo il piano",
+          "UAT approvato dal cliente"
+        ],
+        "approvers": [
+          "client"
+        ]
+      }
+    },
+    {
+      "id": "deployment",
+      "name": "Rilascio",
+      "order": 6,
+      "kind": "phase",
+      "inputs": [
+        "build",
+        "test-report"
+      ],
+      "activities": [
+        {
+          "id": "release-plan",
+          "name": "Piano di rilascio e rollback",
+          "raci": {
+            "R": [
+              "ops"
+            ],
+            "A": "pm",
+            "C": [
+              "architect"
+            ]
+          }
+        },
+        {
+          "id": "data-migration",
+          "name": "Migrazione dati",
+          "raci": {
+            "R": [
+              "ops",
+              "dev"
+            ],
+            "A": "architect"
+          }
+        },
+        {
+          "id": "prod-deploy",
+          "name": "Deploy in produzione",
+          "raci": {
+            "R": [
+              "ops"
+            ],
+            "A": "pm",
+            "I": [
+              "client",
+              "sponsor"
+            ]
+          }
+        },
+        {
+          "id": "docs-training",
+          "name": "Documentazione utente e formazione",
+          "raci": {
+            "R": [
+              "ba"
+            ],
+            "A": "pm",
+            "I": [
+              "client"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "release-notes",
+        "user-manual",
+        "runbook"
+      ],
+      "gate": {
+        "id": "g6-go-live",
+        "name": "Go / No-go e go-live",
+        "criteria": [
+          "Ambiente di produzione pronto",
+          "Piano di rollback verificato",
+          "Utenti formati"
+        ],
+        "approvers": [
+          "sponsor",
+          "ops",
+          "client"
+        ]
+      }
+    },
+    {
+      "id": "operations",
+      "name": "Esercizio e manutenzione",
+      "order": 7,
+      "kind": "phase",
+      "inputs": [
+        "runbook",
+        "release-notes"
+      ],
+      "activities": [
+        {
+          "id": "hypercare",
+          "name": "Hypercare post go-live",
+          "raci": {
+            "R": [
+              "ops",
+              "dev"
+            ],
+            "A": "pm"
+          }
+        },
+        {
+          "id": "monitoring",
+          "name": "Monitoraggio",
+          "raci": {
+            "R": [
+              "ops"
+            ],
+            "A": "ops"
+          }
+        },
+        {
+          "id": "corrective-maintenance",
+          "name": "Manutenzione correttiva",
+          "raci": {
+            "R": [
+              "dev"
+            ],
+            "A": "ops"
+          }
+        },
+        {
+          "id": "change-management",
+          "name": "Gestione change request",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor",
+            "C": [
+              "client",
+              "architect"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "change-log"
+      ],
+      "gate": {
+        "id": "g7-hypercare-exit",
+        "name": "Fine hypercare",
+        "criteria": [
+          "Sistema stabile per il periodo concordato",
+          "Passaggio di consegne al supporto completato"
+        ],
+        "approvers": [
+          "ops",
+          "client"
+        ]
+      }
+    },
+    {
+      "id": "closure",
+      "name": "Chiusura",
+      "order": 8,
+      "kind": "phase",
+      "inputs": [
+        "test-report",
+        "change-log",
+        "pm-plan"
+      ],
+      "activities": [
+        {
+          "id": "lessons",
+          "name": "Lessons learned",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "pm",
+            "C": [
+              "architect",
+              "dev",
+              "qa",
+              "ops"
+            ]
+          }
+        },
+        {
+          "id": "archive",
+          "name": "Archiviazione documentale",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "pm"
+          }
+        },
+        {
+          "id": "release-resources",
+          "name": "Rilascio risorse",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor"
+          }
+        },
+        {
+          "id": "contract-close",
+          "name": "Chiusura contrattuale",
+          "raci": {
+            "R": [
+              "pm"
+            ],
+            "A": "sponsor",
+            "I": [
+              "client"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "lessons-learned",
+        "closure-report"
+      ],
+      "gate": {
+        "id": "g8-formal-closure",
+        "name": "Chiusura formale",
+        "criteria": [
+          "Deliverable accettati",
+          "Contratti chiusi",
+          "Documentazione archiviata"
+        ],
+        "approvers": [
+          "sponsor"
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "from": "initiation",
+      "to": "planning",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "planning",
+      "to": "requirements",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "requirements",
+      "to": "design",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "design",
+      "to": "implementation",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "implementation",
+      "to": "testing",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "testing",
+      "to": "deployment",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "deployment",
+      "to": "operations",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "operations",
+      "to": "closure",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "testing",
+      "to": "implementation",
+      "trigger": "defect_found",
+      "description": "Difetti bloccanti tornano allo sviluppo"
+    },
+    {
+      "from": "implementation",
+      "to": "design",
+      "trigger": "change_request",
+      "description": "Anomalia di design emersa in sviluppo"
+    },
+    {
+      "from": "design",
+      "to": "requirements",
+      "trigger": "change_request",
+      "description": "Requisito ambiguo o non realizzabile"
+    },
+    {
+      "from": "operations",
+      "to": "requirements",
+      "trigger": "change_request",
+      "description": "Manutenzione evolutiva: nuovo ciclo sui requisiti"
+    }
+  ],
+  "crossCuttingProcesses": [
+    {
+      "id": "change-control",
+      "name": "Change control",
+      "appliesTo": "all",
+      "owner": "pm"
+    },
+    {
+      "id": "risk-management",
+      "name": "Gestione rischi",
+      "appliesTo": "all",
+      "owner": "pm"
+    },
+    {
+      "id": "configuration-management",
+      "name": "Configuration management",
+      "appliesTo": [
+        "design",
+        "implementation",
+        "testing",
+        "deployment",
+        "operations"
+      ],
+      "owner": "ops"
+    },
+    {
+      "id": "quality-assurance",
+      "name": "Quality assurance",
+      "appliesTo": "all",
+      "owner": "qa"
+    },
+    {
+      "id": "progress-reporting",
+      "name": "Reporting di avanzamento",
+      "appliesTo": "all",
+      "owner": "pm"
+    }
+  ]
+}

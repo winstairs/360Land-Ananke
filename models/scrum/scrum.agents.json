@@ -1,0 +1,870 @@
+{
+  "id": "scrum-e2e-agents",
+  "name": "Topologia agenti per la pipeline Scrum",
+  "version": "1.1.0",
+  "description": "Agile Office agentico come supervisore, un orchestratore per evento Scrum. Le decisioni di gate restano a Product Owner, tech lead e Operations.",
+  "processModel": "scrum-e2e",
+  "supervisor": {
+    "id": "agile-office",
+    "name": "Agile Office agentico",
+    "lead": "agile-lead-agent",
+    "agents": [
+      {
+        "id": "agile-lead-agent",
+        "name": "Coordinatore agile",
+        "responsibilities": [
+          "Governa il ciclo degli sprint: avvia ogni evento solo dopo l'approvazione umana del gate precedente",
+          "Passa a ogni orchestratore Sprint Goal, backlog e vincoli",
+          "Riceve le escalation e decide se portarle al Product Owner o al tech lead"
+        ],
+        "supportsRole": "scrum-master",
+        "autonomy": "supervised",
+        "tools": [
+          "process-state-store",
+          "orchestrator-dispatch",
+          "notifications"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "read-decisions",
+            "name": "Lettura decisioni del Product Owner",
+            "cron": "*/30 8-19 * * 1-5",
+            "action": "apply-gate-decisions"
+          },
+          {
+            "id": "timebox",
+            "name": "Controllo dei timebox",
+            "cron": "*/15 * * * *",
+            "action": "check-timebox"
+          },
+          {
+            "id": "sprint-report",
+            "name": "Report di fine sprint",
+            "cron": "0 18 * * 5"
+          }
+        ]
+      },
+      {
+        "id": "gatekeeper-agent",
+        "name": "Agente di verifica DoR e DoD",
+        "responsibilities": [
+          "Verifica in modo indipendente Definition of Ready e Definition of Done",
+          "Prepara il pacchetto di evidenze per gli approvatori umani",
+          "Restituisce agli orchestratori i criteri non soddisfatti"
+        ],
+        "supportsRole": "tech-lead",
+        "autonomy": "advisory",
+        "tools": [
+          "artifact-read",
+          "issue-tracker"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "check-ready",
+            "name": "Verifica Definition of Ready",
+            "cron": "0 9 * * 1-5"
+          },
+          {
+            "id": "check-done",
+            "name": "Verifica Definition of Done",
+            "cron": "0 17 * * 1-5"
+          }
+        ]
+      },
+      {
+        "id": "backlog-change-agent",
+        "name": "Agente gestione del backlog",
+        "responsibilities": [
+          "Trasforma feedback, difetti e richieste in elementi di backlog",
+          "Aggiorna il product backlog dopo la sprint review",
+          "Segnala al Product Owner gli elementi da riordinare"
+        ],
+        "supportsRole": "product-owner",
+        "autonomy": "advisory",
+        "activities": [
+          "backlog-update"
+        ],
+        "consumes": [
+          "review-notes"
+        ],
+        "produces": [
+          "product-backlog"
+        ],
+        "tools": [
+          "issue-tracker"
+        ],
+        "crossCutting": "backlog-management",
+        "scheduledTasks": [
+          {
+            "id": "backlog-update",
+            "name": "Trasformazione del feedback in elementi di backlog",
+            "cron": "0 16 * * 1-5",
+            "activity": "backlog-update"
+          }
+        ]
+      },
+      {
+        "id": "impediment-agent",
+        "name": "Agente impedimenti e rischi",
+        "responsibilities": [
+          "Raccoglie gli impedimenti dalla daily e dagli orchestratori",
+          "Propone azioni di rimozione e le segue fino alla chiusura",
+          "Mantiene il registro impedimenti"
+        ],
+        "supportsRole": "scrum-master",
+        "autonomy": "supervised",
+        "activities": [
+          "impediment-removal"
+        ],
+        "produces": [
+          "impediment-log"
+        ],
+        "tools": [
+          "issue-tracker",
+          "notifications"
+        ],
+        "crossCutting": "risk-management",
+        "scheduledTasks": [
+          {
+            "id": "impediments",
+            "name": "Raccolta impedimenti",
+            "cron": "0 13 * * 1-5",
+            "activity": "impediment-removal"
+          }
+        ]
+      },
+      {
+        "id": "quality-agent",
+        "name": "Agente quality assurance",
+        "responsibilities": [
+          "Verifica che la Definition of Done sia applicata in ogni sprint",
+          "Segnala debito tecnico e regressioni di qualità"
+        ],
+        "supportsRole": "tech-lead",
+        "autonomy": "advisory",
+        "consumes": [
+          "definition-of-done",
+          "test-report"
+        ],
+        "tools": [
+          "artifact-read",
+          "static-analysis"
+        ],
+        "crossCutting": "quality-assurance",
+        "scheduledTasks": [
+          {
+            "id": "dod-audit",
+            "name": "Verifica applicazione Definition of Done",
+            "cron": "0 11 * * 3"
+          }
+        ]
+      },
+      {
+        "id": "config-agent",
+        "name": "Agente configuration management",
+        "responsibilities": [
+          "Versiona build e incrementi",
+          "Gestisce tag di release e coerenza tra sprint backlog, codice e build"
+        ],
+        "supportsRole": "ops",
+        "autonomy": "autonomous",
+        "tools": [
+          "repo-write",
+          "artifact-registry"
+        ],
+        "crossCutting": "configuration-management",
+        "scheduledTasks": [
+          {
+            "id": "increment-versioning",
+            "name": "Versionamento degli incrementi",
+            "cron": "0 20 * * 1-5"
+          }
+        ]
+      },
+      {
+        "id": "metrics-agent",
+        "name": "Agente metriche",
+        "responsibilities": [
+          "Aggiorna burndown e velocity",
+          "Segnala gli scostamenti dallo Sprint Goal"
+        ],
+        "supportsRole": "scrum-master",
+        "autonomy": "autonomous",
+        "activities": [
+          "progress-tracking"
+        ],
+        "consumes": [
+          "sprint-backlog"
+        ],
+        "produces": [
+          "burndown"
+        ],
+        "tools": [
+          "issue-tracker",
+          "analytics"
+        ],
+        "crossCutting": "progress-reporting",
+        "scheduledTasks": [
+          {
+            "id": "burndown",
+            "name": "Aggiornamento burndown",
+            "cron": "0 19 * * 1-5",
+            "activity": "progress-tracking"
+          },
+          {
+            "id": "velocity",
+            "name": "Calcolo velocity",
+            "cron": "0 9 * * 1",
+            "activity": "progress-tracking"
+          }
+        ]
+      }
+    ]
+  },
+  "orchestratorDefaults": {
+    "responsibilities": [
+      "Riceve dal Coordinatore agile input, Sprint Goal e criteri del gate",
+      "Assegna i compiti agli agenti specialisti nei tempi del timebox",
+      "Sottopone il pacchetto dell'evento al gatekeeper e gestisce il rework",
+      "Segnala impedimenti all'impediment-agent e nuove richieste al backlog-change-agent",
+      "Scala al Coordinatore agile le decisioni fuori mandato"
+    ]
+  },
+  "orchestrators": [
+    {
+      "id": "backlog-orchestrator",
+      "name": "Orchestratore product backlog",
+      "stage": "product-backlog",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Lavora in continuo, anche durante lo sprint"
+      ],
+      "agents": [
+        {
+          "id": "product-goal-agent",
+          "name": "Agente Product Goal",
+          "responsibilities": [
+            "Propone e mantiene il Product Goal con il Product Owner"
+          ],
+          "supportsRole": "product-owner",
+          "autonomy": "advisory",
+          "activities": [
+            "product-goal-def"
+          ],
+          "produces": [
+            "product-goal"
+          ],
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "product-goal-def",
+              "name": "Definizione del Product Goal",
+              "cron": "0 16 * * 1-5",
+              "activity": "product-goal-def"
+            }
+          ]
+        },
+        {
+          "id": "refinement-agent",
+          "name": "Agente raffinamento backlog",
+          "responsibilities": [
+            "Scrive e raffina le user story",
+            "Raccoglie contesto da Jira e Confluence"
+          ],
+          "supportsRole": "product-owner",
+          "autonomy": "supervised",
+          "activities": [
+            "backlog-refinement"
+          ],
+          "consumes": [
+            "review-notes"
+          ],
+          "produces": [
+            "product-backlog"
+          ],
+          "reviewedBy": "readiness-agent",
+          "tools": [
+            "issue-tracker",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "refinement",
+              "name": "Raffinamento delle user story",
+              "cron": "0 10 * * 2,4",
+              "activity": "backlog-refinement"
+            }
+          ]
+        },
+        {
+          "id": "readiness-agent",
+          "name": "Agente Definition of Ready",
+          "responsibilities": [
+            "Verifica criteri di accettazione, stime e dipendenze",
+            "Mantiene Definition of Ready e Definition of Done"
+          ],
+          "supportsRole": "product-owner",
+          "autonomy": "advisory",
+          "activities": [
+            "acceptance-criteria"
+          ],
+          "consumes": [
+            "product-backlog"
+          ],
+          "produces": [
+            "definition-of-ready",
+            "definition-of-done"
+          ],
+          "tools": [
+            "issue-tracker",
+            "checklists"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "acceptance",
+              "name": "Scrittura criteri di accettazione",
+              "cron": "0 15 * * 1-5",
+              "activity": "acceptance-criteria"
+            },
+            {
+              "id": "deps",
+              "name": "Controllo stime e dipendenze",
+              "cron": "0 16 * * 3",
+              "activity": "acceptance-criteria"
+            }
+          ]
+        },
+        {
+          "id": "estimation-agent",
+          "name": "Agente stime",
+          "responsibilities": [
+            "Propone stime relative degli elementi sulla base dello storico"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "advisory",
+          "activities": [
+            "estimation"
+          ],
+          "consumes": [
+            "product-backlog",
+            "burndown"
+          ],
+          "tools": [
+            "issue-tracker",
+            "analytics"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "estimation",
+              "name": "Stima degli elementi",
+              "cron": "0 11 * * 1-5",
+              "activity": "estimation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning-orchestrator",
+      "name": "Orchestratore sprint planning",
+      "stage": "sprint-planning",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Rispetta il timebox dello sprint planning"
+      ],
+      "agents": [
+        {
+          "id": "sprint-goal-agent",
+          "name": "Agente Sprint Goal",
+          "responsibilities": [
+            "Propone lo Sprint Goal a partire dal Product Goal e dal backlog ordinato"
+          ],
+          "supportsRole": "product-owner",
+          "autonomy": "advisory",
+          "activities": [
+            "sprint-goal-def"
+          ],
+          "consumes": [
+            "product-backlog",
+            "product-goal"
+          ],
+          "produces": [
+            "sprint-goal"
+          ],
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "sprint-goal-def",
+              "name": "Definizione dello Sprint Goal",
+              "cron": "0 12 * * 1-5",
+              "activity": "sprint-goal-def"
+            }
+          ]
+        },
+        {
+          "id": "capacity-agent",
+          "name": "Agente capacità e piano",
+          "responsibilities": [
+            "Seleziona gli elementi in base a velocity e disponibilità",
+            "Scompone gli elementi in task del primo periodo"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "supervised",
+          "activities": [
+            "item-selection",
+            "work-plan"
+          ],
+          "consumes": [
+            "product-backlog",
+            "burndown"
+          ],
+          "produces": [
+            "sprint-backlog"
+          ],
+          "tools": [
+            "issue-tracker"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "item-selection",
+              "name": "Selezione degli elementi in base alla capacità",
+              "cron": "0 13 * * 1-5",
+              "activity": "item-selection"
+            },
+            {
+              "id": "work-plan",
+              "name": "Piano di lavoro dello sprint",
+              "cron": "0 14 * * 1-5",
+              "activity": "work-plan"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sprint-orchestrator",
+      "name": "Orchestratore sprint",
+      "stage": "sprint",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Istanzia un coder-agent per elemento dello sprint backlog",
+        "Chiude lo sprint allo scadere del timebox e restituisce al backlog il lavoro non completato"
+      ],
+      "agents": [
+        {
+          "id": "coder-agent",
+          "name": "Agente sviluppatore",
+          "responsibilities": [
+            "Implementa un elemento dello sprint backlog secondo i criteri di accettazione"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "supervised",
+          "activities": [
+            "development"
+          ],
+          "consumes": [
+            "sprint-backlog"
+          ],
+          "produces": [
+            "source-code"
+          ],
+          "reviewedBy": "code-review-agent",
+          "tools": [
+            "repo-write",
+            "sandbox"
+          ],
+          "scalable": true,
+          "scheduledTasks": [
+            {
+              "id": "development",
+              "name": "Sviluppo elementi dello sprint backlog",
+              "cron": "0 9 * * 1-5",
+              "activity": "development"
+            }
+          ]
+        },
+        {
+          "id": "code-review-agent",
+          "name": "Agente code review",
+          "responsibilities": [
+            "Review indipendente di correttezza, sicurezza e aderenza alla Definition of Done"
+          ],
+          "supportsRole": "tech-lead",
+          "autonomy": "advisory",
+          "activities": [
+            "code-review"
+          ],
+          "consumes": [
+            "source-code",
+            "definition-of-done"
+          ],
+          "tools": [
+            "repo-read",
+            "static-analysis"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "pr-review",
+              "name": "Review delle pull request",
+              "cron": "0 */2 * * 1-5",
+              "activity": "code-review"
+            }
+          ]
+        },
+        {
+          "id": "ci-test-agent",
+          "name": "Agente test e integrazione",
+          "responsibilities": [
+            "Esegue test automatici e build a ogni modifica",
+            "Assembla l'incremento conforme alla Definition of Done"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "autonomous",
+          "activities": [
+            "continuous-testing"
+          ],
+          "consumes": [
+            "source-code"
+          ],
+          "produces": [
+            "build",
+            "test-report",
+            "increment"
+          ],
+          "tools": [
+            "ci-pipeline",
+            "test-environment"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "regression",
+              "name": "Test di regressione",
+              "cron": "0 7 * * 1-5",
+              "activity": "continuous-testing"
+            },
+            {
+              "id": "story-tests",
+              "name": "Test delle storie completate",
+              "cron": "0 */3 * * 1-5",
+              "activity": "continuous-testing"
+            }
+          ]
+        },
+        {
+          "id": "daily-agent",
+          "name": "Agente daily scrum",
+          "responsibilities": [
+            "Prepara la sintesi per la daily: avanzamento, blocchi, rischi sullo Sprint Goal"
+          ],
+          "supportsRole": "scrum-master",
+          "autonomy": "supervised",
+          "activities": [
+            "daily-scrum"
+          ],
+          "consumes": [
+            "sprint-backlog",
+            "burndown"
+          ],
+          "tools": [
+            "issue-tracker",
+            "notifications"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "daily",
+              "name": "Preparazione daily",
+              "cron": "45 8 * * 1-5",
+              "activity": "daily-scrum"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review-orchestrator",
+      "name": "Orchestratore sprint review",
+      "stage": "sprint-review",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Coinvolge il backlog-change-agent per aggiornare il backlog"
+      ],
+      "agents": [
+        {
+          "id": "demo-agent",
+          "name": "Agente presentazione incremento",
+          "responsibilities": [
+            "Prepara la demo e il riepilogo di cosa è stato completato rispetto allo Sprint Goal"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "supervised",
+          "activities": [
+            "increment-demo"
+          ],
+          "consumes": [
+            "increment",
+            "sprint-goal"
+          ],
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "increment-demo",
+              "name": "Presentazione dell'incremento",
+              "cron": "0 10 * * 1-5",
+              "activity": "increment-demo"
+            }
+          ]
+        },
+        {
+          "id": "feedback-agent",
+          "name": "Agente raccolta feedback",
+          "responsibilities": [
+            "Raccoglie e struttura il feedback di cliente e stakeholder"
+          ],
+          "supportsRole": "product-owner",
+          "autonomy": "supervised",
+          "activities": [
+            "feedback-collection"
+          ],
+          "produces": [
+            "review-notes"
+          ],
+          "tools": [
+            "docs",
+            "transcription"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "feedback-collection",
+              "name": "Raccolta del feedback",
+              "cron": "0 11 * * 1-5",
+              "activity": "feedback-collection"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retro-orchestrator",
+      "name": "Orchestratore retrospettiva",
+      "stage": "sprint-retrospective",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "agents": [
+        {
+          "id": "retro-agent",
+          "name": "Agente retrospettiva",
+          "responsibilities": [
+            "Analizza metriche, impedimenti e feedback dello sprint",
+            "Propone i temi da discutere"
+          ],
+          "supportsRole": "scrum-master",
+          "autonomy": "supervised",
+          "activities": [
+            "retrospective"
+          ],
+          "consumes": [
+            "burndown",
+            "impediment-log",
+            "review-notes"
+          ],
+          "tools": [
+            "analytics",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "retro-prep",
+              "name": "Preparazione retrospettiva",
+              "cron": "0 14 * * 5",
+              "activity": "retrospective"
+            }
+          ]
+        },
+        {
+          "id": "improvement-agent",
+          "name": "Agente miglioramento continuo",
+          "responsibilities": [
+            "Formalizza le azioni di miglioramento",
+            "Propone aggiornamenti alla Definition of Done"
+          ],
+          "supportsRole": "scrum-master",
+          "autonomy": "supervised",
+          "activities": [
+            "improvement-plan"
+          ],
+          "produces": [
+            "retro-actions",
+            "definition-of-done"
+          ],
+          "tools": [
+            "issue-tracker",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "improvement-plan",
+              "name": "Azioni di miglioramento e aggiornamento della Definition of Done",
+              "cron": "0 13 * * 1-5",
+              "activity": "improvement-plan"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "release-orchestrator",
+      "name": "Orchestratore rilascio",
+      "stage": "release",
+      "escalatesTo": "agile-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Non rilascia senza il go esplicito di Product Owner e Operations"
+      ],
+      "agents": [
+        {
+          "id": "release-planner-agent",
+          "name": "Agente piano di rilascio",
+          "responsibilities": [
+            "Piano di rilascio e rollback dell'incremento"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "activities": [
+            "release-prep"
+          ],
+          "consumes": [
+            "increment"
+          ],
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "release-prep",
+              "name": "Preparazione del rilascio",
+              "cron": "0 14 * * 1-5",
+              "activity": "release-prep"
+            }
+          ]
+        },
+        {
+          "id": "deploy-agent",
+          "name": "Agente deploy",
+          "responsibilities": [
+            "Deploy tramite pipeline e smoke test"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "activities": [
+            "release-deploy"
+          ],
+          "consumes": [
+            "increment"
+          ],
+          "tools": [
+            "ci-cd",
+            "monitoring"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "release-deploy",
+              "name": "Deploy in produzione",
+              "cron": "0 15 * * 1-5",
+              "activity": "release-deploy"
+            }
+          ]
+        },
+        {
+          "id": "release-notes-agent",
+          "name": "Agente release notes",
+          "responsibilities": [
+            "Release notes per utenti e stakeholder"
+          ],
+          "supportsRole": "developers",
+          "autonomy": "supervised",
+          "activities": [
+            "release-notes-dev"
+          ],
+          "consumes": [
+            "review-notes"
+          ],
+          "produces": [
+            "release-notes"
+          ],
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "release-notes-dev",
+              "name": "Release notes",
+              "cron": "0 16 * * 1-5",
+              "activity": "release-notes-dev"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "humanCheckpoints": [
+    {
+      "id": "gate-approval",
+      "description": "Approvazione dei gate da parte degli approvatori del ProcessModel",
+      "roles": [
+        "product-owner",
+        "tech-lead",
+        "ops"
+      ],
+      "appliesTo": "all"
+    },
+    {
+      "id": "sprint-goal",
+      "description": "Conferma dello Sprint Goal",
+      "roles": [
+        "product-owner"
+      ],
+      "appliesTo": [
+        "sprint-planning"
+      ]
+    },
+    {
+      "id": "increment-acceptance",
+      "description": "Accettazione dell'incremento in sprint review",
+      "roles": [
+        "product-owner"
+      ],
+      "appliesTo": [
+        "sprint-review"
+      ]
+    },
+    {
+      "id": "production-change",
+      "description": "Go esplicito per il deploy in produzione",
+      "roles": [
+        "ops",
+        "product-owner"
+      ],
+      "appliesTo": [
+        "release"
+      ]
+    },
+    {
+      "id": "stakeholder-comms",
+      "description": "Revisione delle comunicazioni esterne prima dell'invio",
+      "roles": [
+        "product-owner"
+      ],
+      "appliesTo": "all"
+    }
+  ]
+}

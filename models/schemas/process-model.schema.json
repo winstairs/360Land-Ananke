@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ananke:process-model:1.1",
+  "title": "ProcessModel",
+  "description": "Modello di processo SDLC (waterfall, scrum, ibrido) per visualizzazione grafica e orchestrazione. Gli stadi sono nodi del grafo, le transizioni sono archi.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "methodology",
+    "version",
+    "roles",
+    "artifacts",
+    "stages",
+    "transitions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "name": {
+      "type": "string"
+    },
+    "methodology": {
+      "enum": [
+        "waterfall",
+        "scrum",
+        "hybrid"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/role"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transition"
+      }
+    },
+    "crossCuttingProcesses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/crossCutting"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Identificativo kebab-case, univoco nel proprio insieme"
+    },
+    "idList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "role": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "document",
+            "plan",
+            "code",
+            "build",
+            "report",
+            "log",
+            "backlog",
+            "other"
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/id",
+          "description": "Ruolo responsabile dell'artefatto"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "raci": {
+      "type": "object",
+      "description": "Matrice RACI: Responsible, Accountable (uno solo), Consulted, Informed",
+      "required": [
+        "R",
+        "A"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "R": {
+          "$ref": "#/$defs/idList",
+          "minItems": 1
+        },
+        "A": {
+          "$ref": "#/$defs/id"
+        },
+        "C": {
+          "$ref": "#/$defs/idList"
+        },
+        "I": {
+          "$ref": "#/$defs/idList"
+        }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "raci"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "raci": {
+          "$ref": "#/$defs/raci"
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "description": "Punto di controllo formale in uscita dallo stadio. Se respinto, lo stadio resta attivo (rework) salvo transizioni esplicite.",
+      "required": [
+        "id",
+        "name",
+        "criteria",
+        "approvers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "approvers": {
+          "$ref": "#/$defs/idList",
+          "minItems": 1
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "approved",
+              "rejected",
+              "conditional"
+            ]
+          },
+          "default": [
+            "approved",
+            "rejected",
+            "conditional"
+          ]
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "description": "Nodo del processo: fase (waterfall), evento o cerimonia (scrum)",
+      "required": [
+        "id",
+        "name",
+        "order",
+        "kind",
+        "activities",
+        "outputs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "enum": [
+            "phase",
+            "event",
+            "ceremony"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "inputs": {
+          "$ref": "#/$defs/idList"
+        },
+        "activities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/activity"
+          }
+        },
+        "outputs": {
+          "$ref": "#/$defs/idList"
+        },
+        "gate": {
+          "$ref": "#/$defs/gate"
+        },
+        "iterative": {
+          "type": "boolean",
+          "default": false,
+          "description": "true per stadi che si ripetono (es. sprint)"
+        },
+        "timebox": {
+          "type": "string",
+          "description": "Durata ISO 8601 (es. P2W), tipica di Scrum"
+        },
+        "ui": {
+          "type": "object",
+          "description": "Metadati di presentazione per l'interfaccia grafica",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "color": {
+              "type": "string"
+            },
+            "lane": {
+              "type": "string"
+            }
+          }
+        },
+        "continuous": {
+          "type": "boolean",
+          "default": false,
+          "description": "Attività che prosegue mentre altri stadi sono attivi (es. raffinamento del product backlog)"
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "trigger"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/id"
+        },
+        "to": {
+          "$ref": "#/$defs/id"
+        },
+        "trigger": {
+          "enum": [
+            "gate_approved",
+            "gate_rejected",
+            "gate_conditional",
+            "defect_found",
+            "change_request",
+            "timebox_end"
+          ]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "crossCutting": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "appliesTo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "appliesTo": {
+          "oneOf": [
+            {
+              "const": "all"
+            },
+            {
+              "$ref": "#/$defs/idList",
+              "minItems": 1
+            }
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    }
+  }
+}

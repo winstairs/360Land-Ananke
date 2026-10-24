@@ -1,0 +1,470 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ananke:platform-config:1.2",
+  "title": "PlatformConfig",
+  "description": "Configurazione modificabile dalla GUI: catalogo di persone (umani e avatar), chi copre ogni ruolo del processo, quale persona esegue ogni slot della topologia, preset, modelli e connettori.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "processModel",
+    "agentTopology",
+    "policy",
+    "agentPresets",
+    "connectors",
+    "bindings",
+    "personas",
+    "roleAssignments",
+    "slotAssignments"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "version": {
+      "type": "string"
+    },
+    "processModel": {
+      "$ref": "#/$defs/id"
+    },
+    "agentTopology": {
+      "$ref": "#/$defs/id"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requireHumanApprovers": {
+          "type": "boolean",
+          "default": true,
+          "description": "I ruoli approvatori di gate non possono essere assegnati solo ad agenti"
+        },
+        "requireHumanAccountable": {
+          "type": "boolean",
+          "default": true,
+          "description": "I ruoli Accountable nelle RACI non possono essere assegnati solo ad agenti"
+        },
+        "crossFamilyReview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Se true, un agente revisore deve usare una famiglia di modelli diversa da quella dell'agente revisionato"
+        }
+      }
+    },
+    "agentPresets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/agentPreset"
+      }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/connector"
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "description": "Quale connettore svolge ogni funzione e dove vive ogni artefatto",
+      "required": [
+        "workTracking",
+        "knowledgeBase"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "workTracking": {
+          "$ref": "#/$defs/id"
+        },
+        "knowledgeBase": {
+          "$ref": "#/$defs/id"
+        },
+        "fileStorage": {
+          "$ref": "#/$defs/id"
+        },
+        "codeHosting": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactStorage": {
+          "type": "object",
+          "description": "id artefatto -> id connettore",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    },
+    "roleAssignments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/roleAssignment"
+      }
+    },
+    "slotAssignments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/slotAssignment"
+      }
+    },
+    "personas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/persona"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+    },
+    "idList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "agentPreset": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "runtime"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "llm-agent",
+            "external-agent"
+          ],
+          "description": "llm-agent: eseguito dalla piattaforma su un modello; external-agent: agente di terzi raggiunto via protocollo"
+        },
+        "runtime": {
+          "enum": [
+            "langgraph",
+            "claude-agent-sdk",
+            "a2a",
+            "mcp",
+            "rest"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "description": "provider/alias di un modello attivo del catalogo LLM (models/platform/llm-catalog.json), richiesto per llm-agent"
+        },
+        "fallbackModel": {
+          "type": "string",
+          "description": "provider/alias del modello da usare se il principale non risponde"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "Richiesto per external-agent"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "maxIterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowedConnectors": {
+          "$ref": "#/$defs/idList"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "llm-agent"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "model"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "external-agent"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "endpoint"
+            ]
+          }
+        }
+      ]
+    },
+    "connector": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "system",
+        "category",
+        "transport"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "system": {
+          "enum": [
+            "jira",
+            "confluence",
+            "clickup",
+            "plane",
+            "google-drive",
+            "github",
+            "gitlab",
+            "slack",
+            "other"
+          ]
+        },
+        "category": {
+          "enum": [
+            "work-tracking",
+            "knowledge-base",
+            "file-storage",
+            "code-hosting",
+            "communication"
+          ]
+        },
+        "transport": {
+          "enum": [
+            "mcp-remote",
+            "mcp-local",
+            "rest"
+          ]
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ga",
+            "preview",
+            "community"
+          ],
+          "description": "Maturità del server o dell'API usati"
+        },
+        "readOnly": {
+          "type": "boolean",
+          "default": false
+        },
+        "notes": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "description": "Parametri specifici dello strumento e del tipo di collegamento (ambito, autenticazione, comando MCP). I segreti non si salvano: si indica solo il nome della variabile d'ambiente, in chiavi che finiscono in Env",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "roleAssignment": {
+      "type": "object",
+      "required": [
+        "role",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/id",
+          "description": "Ruolo del ProcessModel"
+        },
+        "mode": {
+          "enum": [
+            "human",
+            "agent",
+            "hybrid"
+          ],
+          "description": "hybrid: un umano resta titolare, gli agenti eseguono il lavoro operativo"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "personas": {
+          "$ref": "#/$defs/idList",
+          "description": "Persone umane che coprono il ruolo"
+        }
+      }
+    },
+    "slotAssignment": {
+      "type": "object",
+      "required": [
+        "slot",
+        "persona"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "slot": {
+          "$ref": "#/$defs/id",
+          "description": "id dell'agente nella AgentTopology"
+        },
+        "persona": {
+          "$ref": "#/$defs/id",
+          "description": "Persona del catalogo che esegue lo slot: avatar (agente) o umano"
+        },
+        "agentName": {
+          "type": "string",
+          "description": "Nome dell'agente dentro l'avatar"
+        },
+        "preset": {
+          "$ref": "#/$defs/id",
+          "description": "Obbligatorio se la persona è un avatar"
+        },
+        "instructions": {
+          "type": "string"
+        },
+        "autonomy": {
+          "enum": [
+            "advisory",
+            "supervised",
+            "autonomous"
+          ]
+        },
+        "connectors": {
+          "$ref": "#/$defs/idList"
+        },
+        "maxIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "taskOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "cron": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "persona": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "human",
+            "avatar"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome sul badge"
+        },
+        "title": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email della persona; per un avatar è l'utente tecnico usato dagli agenti sui connettori"
+        },
+        "face": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "skin": {
+              "type": "string"
+            },
+            "hair": {
+              "type": "string"
+            },
+            "shirt": {
+              "type": "string"
+            },
+            "longHair": {
+              "type": "boolean"
+            }
+          }
+        },
+        "delegates": {
+          "$ref": "#/$defs/idList",
+          "description": "Preset di agenti esterni (es. Rovo) che gli agenti dell'avatar possono invocare"
+        }
+      }
+    }
+  }
+}

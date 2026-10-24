@@ -1,0 +1,74 @@
+{
+  "id": "ananke-llm-catalog",
+  "version": "1.0.0",
+  "description": "Provider e modelli disponibili agli agenti. Il worker li sincronizza sul gateway LiteLLM; le chiavi stanno nel file .env del gateway, qui solo il nome della variabile.",
+  "providers": [
+    {
+      "id": "anthropic",
+      "name": "Claude (Anthropic API)",
+      "kind": "anthropic",
+      "deployment": "cloud",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "enabled": true,
+      "models": [
+        { "alias": "claude-opus", "upstream": "claude-opus-5-5", "family": "claude", "license": "proprietary", "tags": ["reasoning", "review"] },
+        { "alias": "claude-sonnet", "upstream": "claude-sonnet-5-5", "family": "claude", "license": "proprietary", "tags": ["writing", "coding"] },
+        { "alias": "claude-haiku", "upstream": "claude-haiku-5-5", "family": "claude", "license": "proprietary", "tags": ["fast", "classification"] }
+      ]
+    },
+    {
+      "id": "ollama-local",
+      "name": "Ollama locale",
+      "kind": "ollama",
+      "deployment": "self-hosted",
+      "host": "container ollama (profilo local-llm)",
+      "baseUrl": "http://ollama:11434",
+      "enabled": true,
+      "notes": "Demo locali: tutti gli alias usano Qwen3.6 35B-A3B. Verificare tag e licenza sulla model card prima dell'uso.",
+      "models": [
+        { "alias": "oss-generalist", "upstream": "qwen3.6:35b-a3b-q4_K_M", "family": "qwen", "license": "Apache-2.0", "tags": ["general", "reasoning"] },
+        { "alias": "oss-coder", "upstream": "qwen3.6:35b-a3b-q4_K_M", "family": "qwen", "license": "Apache-2.0", "tags": ["coding"] },
+        { "alias": "oss-light", "upstream": "qwen3.6:35b-a3b-q4_K_M", "family": "qwen", "license": "Apache-2.0", "tags": ["fast", "triage"] },
+        { "alias": "oss-coder-small", "upstream": "qwen3.6:35b-a3b-q4_K_M", "family": "qwen", "license": "Apache-2.0", "tags": ["coding"] }
+      ]
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "kind": "openai",
+      "deployment": "cloud",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "enabled": false,
+      "notes": "Esempio: verificare l'identificativo del modello sulla documentazione OpenAI prima di attivarlo.",
+      "models": [
+        { "alias": "openai-gpt", "upstream": "gpt-5", "family": "gpt", "license": "proprietary", "tags": ["general"] }
+      ]
+    },
+    {
+      "id": "hetzner-gpu",
+      "name": "Server GPU Hetzner (vLLM)",
+      "kind": "vllm",
+      "deployment": "self-hosted",
+      "host": "Hetzner, server GPU dedicato",
+      "baseUrl": "https://<server-hetzner>/v1",
+      "apiKeyEnv": "HETZNER_LLM_API_KEY",
+      "enabled": false,
+      "notes": "Esempio di modello open su server proprio: impostare l'indirizzo reale e la chiave di vLLM (--api-key).",
+      "models": [
+        { "alias": "hetzner-generalist", "upstream": "openai/gpt-oss-120b", "family": "gpt-oss", "license": "Apache-2.0", "tags": ["general", "reasoning"] }
+      ]
+    },
+    {
+      "id": "open-cloud",
+      "name": "Provider cloud per modelli open (OpenAI-compatibile)",
+      "kind": "openai-compatible",
+      "deployment": "cloud",
+      "baseUrl": "https://<provider>/v1",
+      "apiKeyEnv": "OPEN_CLOUD_API_KEY",
+      "enabled": false,
+      "models": [
+        { "alias": "oss-generalist-cloud", "upstream": "openai/gpt-oss-120b", "family": "gpt-oss", "license": "Apache-2.0", "tags": ["general", "burst"] }
+      ]
+    }
+  ]
+}

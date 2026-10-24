@@ -1,0 +1,11 @@
+# Dipendenze dirette del backend. Licenze: vedi docs/licenze.md
+fastapi==0.149.0
+uvicorn==0.54.0
+SQLAlchemy[asyncio]==2.1.5
+asyncpg==0.32.0
+aiosqlite==0.22.1
+jsonschema==4.26.0
+APScheduler==3.11.3
+langgraph==1.2.16
+openai==3.35.1
+httpx==0.28.1

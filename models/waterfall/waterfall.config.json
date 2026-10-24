@@ -1,0 +1,1081 @@
+{
+  "id": "default-waterfall",
+  "version": "1.2.0",
+  "processModel": "waterfall-e2e",
+  "agentTopology": "waterfall-e2e-agents",
+  "policy": {
+    "requireHumanApprovers": true,
+    "requireHumanAccountable": true,
+    "crossFamilyReview": true
+  },
+  "agentPresets": [
+    {
+      "id": "claude-reasoning",
+      "name": "Claude ragionamento",
+      "kind": "llm-agent",
+      "runtime": "langgraph",
+      "model": "anthropic/claude-opus",
+      "temperature": 0.2,
+      "maxIterations": 30,
+      "capabilities": [
+        "architettura",
+        "verifica",
+        "decisioni"
+      ]
+    },
+    {
+      "id": "claude-worker",
+      "name": "Claude redazione e analisi",
+      "kind": "llm-agent",
+      "runtime": "langgraph",
+      "model": "anthropic/claude-sonnet",
+      "temperature": 0.3,
+      "maxIterations": 25,
+      "capabilities": [
+        "documenti",
+        "analisi",
+        "pianificazione"
+      ],
+      "allowedConnectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "google-drive"
+      ]
+    },
+    {
+      "id": "claude-code-agent",
+      "name": "Claude coding agent",
+      "kind": "llm-agent",
+      "runtime": "claude-agent-sdk",
+      "model": "anthropic/claude-sonnet",
+      "temperature": 0,
+      "maxIterations": 80,
+      "capabilities": [
+        "codice",
+        "sandbox",
+        "repo"
+      ],
+      "allowedConnectors": [
+        "github"
+      ]
+    },
+    {
+      "id": "open-generalist",
+      "name": "Generalista open self-hosted",
+      "kind": "llm-agent",
+      "runtime": "langgraph",
+      "model": "ollama-local/oss-generalist",
+      "temperature": 0.2,
+      "maxIterations": 25,
+      "capabilities": [
+        "analisi",
+        "dati sensibili on-prem"
+      ]
+    },
+    {
+      "id": "open-coder",
+      "name": "Coder open self-hosted",
+      "kind": "llm-agent",
+      "runtime": "langgraph",
+      "model": "ollama-local/oss-coder",
+      "fallbackModel": "ollama-local/oss-coder-small",
+      "temperature": 0,
+      "maxIterations": 60,
+      "capabilities": [
+        "test",
+        "codice"
+      ],
+      "allowedConnectors": [
+        "github"
+      ]
+    },
+    {
+      "id": "open-light",
+      "name": "Agente leggero open",
+      "kind": "llm-agent",
+      "runtime": "langgraph",
+      "model": "ollama-local/oss-light",
+      "temperature": 0,
+      "maxIterations": 15,
+      "capabilities": [
+        "triage",
+        "classificazione",
+        "automazione"
+      ]
+    },
+    {
+      "id": "rovo-agent",
+      "name": "Atlassian Rovo (agente verticale)",
+      "kind": "external-agent",
+      "runtime": "a2a",
+      "endpoint": "https://a2a.atlassian.com/v1/rovo",
+      "capabilities": [
+        "ricerca e sintesi Jira/Confluence",
+        "creazione work item e pagine"
+      ]
+    }
+  ],
+  "connectors": [
+    {
+      "id": "atlassian-jira",
+      "name": "Jira Cloud",
+      "system": "jira",
+      "category": "work-tracking",
+      "transport": "mcp-remote",
+      "endpoint": "https://mcp.atlassian.com/v2/mcp",
+      "status": "ga",
+      "notes": "Rovo MCP server, stesso endpoint di Confluence",
+      "settings": {
+        "auth": "oauth",
+        "siteUrl": "https://azienda.atlassian.net",
+        "projectKey": "ANANKE",
+        "issueType": "Task"
+      }
+    },
+    {
+      "id": "atlassian-confluence",
+      "name": "Confluence Cloud",
+      "system": "confluence",
+      "category": "knowledge-base",
+      "transport": "mcp-remote",
+      "endpoint": "https://mcp.atlassian.com/v2/mcp",
+      "status": "ga",
+      "settings": {
+        "auth": "oauth",
+        "siteUrl": "https://azienda.atlassian.net",
+        "spaceKey": "ANANKE"
+      }
+    },
+    {
+      "id": "clickup",
+      "name": "ClickUp",
+      "system": "clickup",
+      "category": "work-tracking",
+      "transport": "mcp-remote",
+      "endpoint": "https://mcp.clickup.com/mcp",
+      "status": "ga",
+      "notes": "Solo OAuth; nessuna cancellazione di liste, cartelle o documenti",
+      "settings": {
+        "auth": "oauth"
+      }
+    },
+    {
+      "id": "plane",
+      "name": "Plane self-hosted",
+      "system": "plane",
+      "category": "work-tracking",
+      "transport": "rest",
+      "endpoint": "https://plane.internal/api/v1",
+      "status": "ga",
+      "notes": "Community Edition AGPL-3.0: usata come servizio separato, non incorporata",
+      "settings": {
+        "auth": "api-key",
+        "tokenEnv": "PLANE_API_KEY",
+        "workspaceSlug": "ananke"
+      }
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "system": "google-drive",
+      "category": "file-storage",
+      "transport": "mcp-remote",
+      "endpoint": "https://drivemcp.googleapis.com/mcp/v1",
+      "status": "preview",
+      "notes": "Developer preview di Google Workspace",
+      "settings": {
+        "auth": "oauth"
+      }
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "system": "github",
+      "category": "code-hosting",
+      "transport": "mcp-remote",
+      "status": "ga",
+      "endpoint": "https://api.githubcopilot.com/mcp/",
+      "settings": {
+        "auth": "oauth",
+        "owner": "azienda",
+        "toolsets": [
+          "repos",
+          "issues",
+          "pull_requests"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "workTracking": "atlassian-jira",
+    "knowledgeBase": "atlassian-confluence",
+    "fileStorage": "google-drive",
+    "codeHosting": "github",
+    "artifactStorage": {
+      "business-case": "atlassian-confluence",
+      "project-charter": "atlassian-confluence",
+      "pm-plan": "atlassian-confluence",
+      "srs": "atlassian-confluence",
+      "traceability-matrix": "atlassian-confluence",
+      "sdd": "atlassian-confluence",
+      "test-plan": "atlassian-confluence",
+      "source-code": "github",
+      "build": "github",
+      "test-report": "atlassian-confluence",
+      "defect-log": "atlassian-jira",
+      "release-notes": "atlassian-confluence",
+      "user-manual": "google-drive",
+      "runbook": "atlassian-confluence",
+      "change-log": "atlassian-jira",
+      "lessons-learned": "atlassian-confluence",
+      "closure-report": "atlassian-confluence"
+    }
+  },
+  "roleAssignments": [
+    {
+      "role": "sponsor",
+      "mode": "human",
+      "personas": [
+        "marco"
+      ]
+    },
+    {
+      "role": "client",
+      "mode": "human",
+      "personas": [
+        "laura"
+      ]
+    },
+    {
+      "role": "pm",
+      "mode": "hybrid",
+      "personas": [
+        "giulia"
+      ]
+    },
+    {
+      "role": "ba",
+      "mode": "hybrid",
+      "personas": [
+        "anna"
+      ]
+    },
+    {
+      "role": "architect",
+      "mode": "hybrid",
+      "personas": [
+        "paolo"
+      ]
+    },
+    {
+      "role": "dev",
+      "mode": "agent",
+      "personas": []
+    },
+    {
+      "role": "qa",
+      "mode": "agent",
+      "personas": []
+    },
+    {
+      "role": "ops",
+      "mode": "hybrid",
+      "personas": [
+        "sara"
+      ]
+    }
+  ],
+  "slotAssignments": [
+    {
+      "slot": "pm-lead-agent",
+      "persona": "ada",
+      "agentName": "Coordinatore PM",
+      "preset": "claude-reasoning",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "planner-agent",
+      "persona": "ada",
+      "agentName": "Agente di pianificazione e controllo",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "risk-agent",
+      "persona": "pia",
+      "agentName": "Agente gestione rischi",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "gatekeeper-agent",
+      "persona": "vera",
+      "agentName": "Agente di verifica dei gate",
+      "preset": "claude-reasoning",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "change-agent",
+      "persona": "pia",
+      "agentName": "Agente change control",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "traceability-agent",
+      "persona": "teo",
+      "agentName": "Agente di tracciabilità",
+      "preset": "open-generalist",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "qa-auditor-agent",
+      "persona": "pia",
+      "agentName": "Agente quality assurance",
+      "preset": "claude-reasoning",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "config-agent",
+      "persona": "pia",
+      "agentName": "Agente configuration management",
+      "preset": "open-light",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "reporting-agent",
+      "persona": "ada",
+      "agentName": "Agente di reporting",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "business-case-agent",
+      "persona": "ugo",
+      "agentName": "Agente business case",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "feasibility-agent",
+      "persona": "ugo",
+      "agentName": "Agente fattibilità",
+      "preset": "claude-reasoning",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "stakeholder-agent",
+      "persona": "ugo",
+      "agentName": "Agente analisi stakeholder",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "charter-agent",
+      "persona": "ugo",
+      "agentName": "Agente project charter",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "wbs-agent",
+      "persona": "ada",
+      "agentName": "Agente WBS",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "estimation-agent",
+      "persona": "ada",
+      "agentName": "Agente stime e budget",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "scheduler-agent",
+      "persona": "ada",
+      "agentName": "Agente cronoprogramma",
+      "preset": "open-generalist",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "plan-writer-agent",
+      "persona": "ada",
+      "agentName": "Agente Project Management Plan",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "elicitation-agent",
+      "persona": "elio",
+      "agentName": "Agente raccolta requisiti",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "requirements-writer-agent",
+      "persona": "elio",
+      "agentName": "Agente specifica requisiti",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "requirements-validator-agent",
+      "persona": "nora",
+      "agentName": "Agente validazione requisiti",
+      "preset": "open-generalist",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "architect-agent",
+      "persona": "lia",
+      "agentName": "Agente architettura",
+      "preset": "claude-reasoning",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "security-design-agent",
+      "persona": "rex",
+      "agentName": "Agente security by design",
+      "preset": "claude-reasoning",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "detailed-design-agent",
+      "persona": "lia",
+      "agentName": "Agente design di dettaglio",
+      "preset": "open-generalist",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "data-interface-agent",
+      "persona": "lia",
+      "agentName": "Agente modello dati e interfacce",
+      "preset": "open-generalist",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "test-planner-agent",
+      "persona": "lia",
+      "agentName": "Agente piano di test",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "coder-agent",
+      "persona": "bruno",
+      "agentName": "Agente sviluppatore",
+      "preset": "claude-code-agent",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "code-review-agent",
+      "persona": "ivo",
+      "agentName": "Agente code review",
+      "preset": "open-generalist",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "unit-test-agent",
+      "persona": "bruno",
+      "agentName": "Agente unit test",
+      "preset": "open-coder",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "build-agent",
+      "persona": "bruno",
+      "agentName": "Agente build e CI",
+      "preset": "open-light",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "integration-test-agent",
+      "persona": "mia",
+      "agentName": "Agente test di integrazione",
+      "preset": "open-coder",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "system-test-agent",
+      "persona": "mia",
+      "agentName": "Agente test di sistema",
+      "preset": "open-coder",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "nfr-test-agent",
+      "persona": "mia",
+      "agentName": "Agente test non funzionali",
+      "preset": "open-coder",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "uat-support-agent",
+      "persona": "mia",
+      "agentName": "Agente supporto UAT",
+      "preset": "claude-worker",
+      "autonomy": "advisory",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "test-analyst-agent",
+      "persona": "mia",
+      "agentName": "Agente analisi difetti e report",
+      "preset": "open-generalist",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "release-planner-agent",
+      "persona": "dario",
+      "agentName": "Agente piano di rilascio",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "migration-agent",
+      "persona": "dario",
+      "agentName": "Agente migrazione dati",
+      "preset": "claude-code-agent",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "deploy-agent",
+      "persona": "dario",
+      "agentName": "Agente deploy",
+      "preset": "open-light",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "docs-agent",
+      "persona": "dario",
+      "agentName": "Agente documentazione e formazione",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "monitoring-agent",
+      "persona": "oli",
+      "agentName": "Agente monitoraggio",
+      "preset": "open-light",
+      "autonomy": "autonomous",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "incident-agent",
+      "persona": "oli",
+      "agentName": "Agente gestione incidenti",
+      "preset": "open-generalist",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "maintenance-agent",
+      "persona": "oli",
+      "agentName": "Agente manutenzione correttiva",
+      "preset": "claude-code-agent",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence",
+        "github"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "lessons-learned-agent",
+      "persona": "kai",
+      "agentName": "Agente lessons learned",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    },
+    {
+      "slot": "closure-report-agent",
+      "persona": "kai",
+      "agentName": "Agente chiusura progetto",
+      "preset": "claude-worker",
+      "autonomy": "supervised",
+      "connectors": [
+        "atlassian-jira",
+        "atlassian-confluence"
+      ],
+      "maxIterations": 25
+    }
+  ],
+  "personas": [
+    {
+      "id": "marco",
+      "kind": "human",
+      "name": "Marco R.",
+      "title": "Direzione · sponsor",
+      "face": {
+        "skin": "#E8B892",
+        "hair": "#3B2A20",
+        "shirt": "#4A5568",
+        "longHair": false
+      },
+      "email": ""
+    },
+    {
+      "id": "laura",
+      "kind": "human",
+      "name": "Laura B.",
+      "title": "Referente del cliente",
+      "face": {
+        "skin": "#F1C7A5",
+        "hair": "#8A4B2A",
+        "shirt": "#7A5C9E",
+        "longHair": true
+      },
+      "email": ""
+    },
+    {
+      "id": "giulia",
+      "kind": "human",
+      "name": "Giulia F.",
+      "title": "Project Manager",
+      "face": {
+        "skin": "#D9A27E",
+        "hair": "#1F1A17",
+        "shirt": "#2F6F8F",
+        "longHair": true
+      },
+      "email": ""
+    },
+    {
+      "id": "anna",
+      "kind": "human",
+      "name": "Anna V.",
+      "title": "Business Analyst",
+      "face": {
+        "skin": "#E6BC98",
+        "hair": "#4A2E1E",
+        "shirt": "#5B4A8A",
+        "longHair": true
+      },
+      "email": ""
+    },
+    {
+      "id": "paolo",
+      "kind": "human",
+      "name": "Paolo D.",
+      "title": "Architetto software · tech lead",
+      "face": {
+        "skin": "#C68863",
+        "hair": "#5B5B5B",
+        "shirt": "#3F5E3A",
+        "longHair": false
+      },
+      "email": ""
+    },
+    {
+      "id": "sara",
+      "kind": "human",
+      "name": "Sara M.",
+      "title": "Operations",
+      "face": {
+        "skin": "#EBC2A0",
+        "hair": "#B07A35",
+        "shirt": "#8F3F3F",
+        "longHair": true
+      },
+      "email": ""
+    },
+    {
+      "id": "ada",
+      "kind": "avatar",
+      "name": "Ada",
+      "title": "Avatar di coordinamento",
+      "face": {
+        "skin": "#E9C9AE",
+        "hair": "#6B4E9B",
+        "shirt": "#2F45C9",
+        "longHair": true
+      }
+    },
+    {
+      "id": "vera",
+      "kind": "avatar",
+      "name": "Vera",
+      "title": "Avatar di verifica dei gate",
+      "face": {
+        "skin": "#D8B49A",
+        "hair": "#1F3A5F",
+        "shirt": "#16181D",
+        "longHair": true
+      }
+    },
+    {
+      "id": "pia",
+      "kind": "avatar",
+      "name": "Pia",
+      "title": "Avatar processi trasversali",
+      "face": {
+        "skin": "#E4BA96",
+        "hair": "#5E3A24",
+        "shirt": "#0F766E",
+        "longHair": true
+      }
+    },
+    {
+      "id": "teo",
+      "kind": "avatar",
+      "name": "Teo",
+      "title": "Avatar tracciabilità e metriche",
+      "face": {
+        "skin": "#C99573",
+        "hair": "#2E2E2E",
+        "shirt": "#0F766E",
+        "longHair": false
+      },
+      "delegates": [
+        "rovo-agent"
+      ]
+    },
+    {
+      "id": "ugo",
+      "kind": "avatar",
+      "name": "Ugo",
+      "title": "Avatar avvio progetti",
+      "face": {
+        "skin": "#DDB08B",
+        "hair": "#5C3D2E",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "elio",
+      "kind": "avatar",
+      "name": "Elio",
+      "title": "Avatar analista",
+      "face": {
+        "skin": "#E2B58F",
+        "hair": "#7A4A2B",
+        "shirt": "#0F766E",
+        "longHair": false
+      },
+      "delegates": [
+        "rovo-agent"
+      ]
+    },
+    {
+      "id": "nora",
+      "kind": "avatar",
+      "name": "Nora",
+      "title": "Avatar revisore requisiti",
+      "face": {
+        "skin": "#F0CFB4",
+        "hair": "#A0522D",
+        "shirt": "#0F766E",
+        "longHair": true
+      }
+    },
+    {
+      "id": "lia",
+      "kind": "avatar",
+      "name": "Lia",
+      "title": "Avatar progettista",
+      "face": {
+        "skin": "#E7BE9C",
+        "hair": "#3A2A4F",
+        "shirt": "#0F766E",
+        "longHair": true
+      }
+    },
+    {
+      "id": "rex",
+      "kind": "avatar",
+      "name": "Rex",
+      "title": "Avatar sicurezza",
+      "face": {
+        "skin": "#BF8763",
+        "hair": "#1E1E1E",
+        "shirt": "#7A2E2E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "bruno",
+      "kind": "avatar",
+      "name": "Bruno",
+      "title": "Avatar sviluppatore",
+      "face": {
+        "skin": "#D6A07A",
+        "hair": "#4A3426",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "ivo",
+      "kind": "avatar",
+      "name": "Ivo",
+      "title": "Avatar revisore codice",
+      "face": {
+        "skin": "#EAC4A4",
+        "hair": "#6E6E6E",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "mia",
+      "kind": "avatar",
+      "name": "Mia",
+      "title": "Avatar tester",
+      "face": {
+        "skin": "#F2D2B6",
+        "hair": "#C6893F",
+        "shirt": "#0F766E",
+        "longHair": true
+      }
+    },
+    {
+      "id": "dario",
+      "kind": "avatar",
+      "name": "Dario",
+      "title": "Avatar rilascio",
+      "face": {
+        "skin": "#C48A64",
+        "hair": "#3A2B22",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "oli",
+      "kind": "avatar",
+      "name": "Oli",
+      "title": "Avatar esercizio",
+      "face": {
+        "skin": "#E0B691",
+        "hair": "#2F4F4F",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    },
+    {
+      "id": "kai",
+      "kind": "avatar",
+      "name": "Kai",
+      "title": "Avatar chiusura",
+      "face": {
+        "skin": "#D3A07E",
+        "hair": "#4B3B2F",
+        "shirt": "#0F766E",
+        "longHair": false
+      }
+    }
+  ]
+}

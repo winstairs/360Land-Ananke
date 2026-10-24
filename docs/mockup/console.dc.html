@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Ananke · Console</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F4EF}
+a{color:#2F45C9}a:hover{color:#1F2F93}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4EF; color: #16181D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: #16181D; color: #F5F4EF">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2" fill="#F5F4EF"></rect><rect x="16" y="2" width="10" height="10" rx="2" fill="#8C9BF0"></rect><rect x="2" y="16" width="10" height="10" rx="2" fill="#8C9BF0"></rect><rect x="16" y="16" width="10" height="10" rx="2" fill="#F5F4EF"></rect></svg>
+<div>
+<div style="font-weight: 600; font-size: 17px">Ananke</div>
+<div style="font-size: 12px; color: #C9CBD1">Console · orchestrazione SDLC · dati di esempio</div>
+</div>
+</div>
+<nav aria-label="Sezioni" style="display: flex; gap: 6px">
+<a href="Main.dc.html" aria-current="page" style="padding: 8px 14px; border-radius: 8px; color: #16181D; background: #F5F4EF; text-decoration: none; font-size: 14px; font-weight: 600">Console</a>
+<a href="Config.dc.html" style="padding: 8px 14px; border-radius: 8px; color: #C9CBD1; text-decoration: none; font-size: 14px; border: 1px solid #3A3E47">Configurazione</a>
+</nav>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1440px; box-sizing: border-box; margin: 0 auto">
+
+<main style="flex: 1 1 100%; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section aria-label="Macchina a stati del progetto" style="background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 320px">
+<label for="project-select" style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase">Progetto attivo</label>
+<select id="project-select" value="{{projId}}" onChange="{{onProject}}" style="min-height: 44px; max-width: 420px; width: 100%; padding: 8px 12px; border: 1px solid #C9C7BE; border-radius: 8px; background: #FFFFFF; color: #16181D; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer">
+<sc-for list="{{projects}}" as="pr" hint-placeholder-count="3">
+<option value="{{pr.id}}">{{pr.name}} · {{pr.modelLabel}}</option>
+</sc-for>
+</select>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<span style="font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #ECEAE2; color: #3A3E47">{{proj.client}}</span>
+<span style="font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #ECEAE2; color: #3A3E47">Modello {{model.label}}</span>
+<span style="font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #ECEAE2; color: #3A3E47">Fase attuale: {{currentName}}</span>
+</div>
+</div>
+<div style="font-size: 13px; color: #5A5F6A">Seleziona una fase per vederne i responsabili</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<sc-for list="{{phases}}" as="ph" hint-placeholder-count="9">
+<button type="button" onClick="{{ph.pick}}" aria-pressed="{{ph.pressed}}" style="{{ph.style}}">
+<span style="display: block; font-weight: 600; font-size: 14px">{{ph.name}}</span>
+<span style="display: block; font-size: 12px; {{ph.subStyle}}">{{ph.statusLabel}}</span>
+</button>
+<sc-if value="{{ph.arrow}}" hint-placeholder-val="{{ true }}">
+<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7 H10 M7 4 L10 7 L7 10" fill="none" stroke="#9A9DA5" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"></path></svg>
+</sc-if>
+</sc-for>
+</div>
+<sc-if value="{{isAgile}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 12px; font-size: 13px; color: #5A5F6A">Da Sprint planning a Retrospettiva gli stati si ripetono a ogni sprint · sprint corrente: 3</div>
+</sc-if>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section aria-label="Matrice RACI della fase" style="flex: 999 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 14px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Responsabili · {{phase.name}}</h2>
+<div style="display: flex; gap: 12px; font-size: 12px; color: #5A5F6A; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #2A3AA8; display: inline-block"></span>Umano</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed #0B6B53; display: inline-block"></span>Avatar (agenti)</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px">
+<sc-for list="{{raci}}" as="col" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<div style="display: flex; align-items: baseline; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #ECEAE2">
+<span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 16px">{{col.letter}}</span>
+<span style="font-size: 13px; color: #5A5F6A">{{col.label}}</span>
+</div>
+<sc-for list="{{col.people}}" as="p" hint-placeholder-count="2">
+<button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="{{p.style}}">
+<svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{p.bg}}" stroke="{{p.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{p.dash}}"></circle>
+<path d="{{p.sides}}" fill="{{p.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{p.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{p.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{p.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<span style="display: flex; flex-direction: column; min-width: 0; text-align: left">
+<span style="font-weight: 600; font-size: 14px">{{p.name}}</span>
+<span style="font-size: 12px; color: #5A5F6A">{{p.role}}</span>
+<span style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px">
+<span style="{{p.tagStyle}}">{{p.typeLabel}}</span>
+<sc-if value="{{p.isGroup}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #ECEAE2; color: #3A3E47">{{p.groupLabel}}</span>
+</sc-if>
+</span>
+</span>
+</button>
+</sc-for>
+<sc-if value="{{col.empty}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; color: #5A5F6A; padding: 8px 0">Nessuno</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Dettaglio del responsabile" style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; gap: 14px; align-items: center">
+<svg width="64" height="64" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{sel.bg}}" stroke="{{sel.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{sel.dash}}"></circle>
+<path d="{{sel.sides}}" fill="{{sel.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{sel.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{sel.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{sel.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<div style="min-width: 0">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">{{sel.name}}</h2>
+<div style="font-size: 13px; color: #5A5F6A">{{sel.role}} · {{selRaci}} in {{phase.name}}</div>
+<div style="margin-top: 6px"><span style="{{sel.tagStyle}}">{{sel.typeLabel}}</span></div>
+</div>
+</div>
+
+<sc-if value="{{sel.isAgent}}" hint-placeholder-val="{{ true }}">
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">Composizione</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{sel.agents}}" as="ag" hint-placeholder-count="2">
+<div style="display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 10px; background: #F5F4EF; border-radius: 8px">
+<span>{{ag.n}}</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3A3E47">{{ag.m}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">{{tasksTitle}}</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div style="border: 1px solid #DEDCD3; border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="min-width: 0; flex: 1 1 200px">
+<div style="font-weight: 600; font-size: 14px">{{t.name}}</div>
+<div style="font-size: 12px; color: #5A5F6A"><span style="font-family: 'IBM Plex Mono', monospace; color: #3A3E47">{{t.cron}}</span> · {{t.human}}</div>
+<div style="font-size: 12px; color: #5A5F6A">{{t.status}}</div>
+</div>
+<button type="button" onClick="{{t.run}}" style="min-height: 40px; padding: 8px 14px; border-radius: 8px; border: 1px solid #2F45C9; background: #2F45C9; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer">{{t.btn}}</button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{hasMsg}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="font-size: 13px; padding: 10px 12px; border-radius: 8px; background: #EEF0FB; color: #1F2F93">{{msg}}</div>
+</sc-if>
+
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">{{logTitle}}</div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{log}}" as="l" hint-placeholder-count="3">
+<div style="display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #ECEAE2; font-size: 13px">
+<span style="flex: 0 0 92px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A5F6A">{{l.when}}</span>
+<span style="min-width: 0">
+<span style="display: block; font-weight: 500">{{l.task}} <span style="{{l.outStyle}}">{{l.out}}</span></span>
+<span style="display: block; color: #5A5F6A">{{l.detail}}</span>
+</span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+var AC = '#2F45C9';
+var LOOK = {
+  marco: ['#E8B892', '#3B2A20', '#4A5568', 0], laura: ['#F1C7A5', '#8A4B2A', '#7A5C9E', 1], giulia: ['#D9A27E', '#1F1A17', '#2F6F8F', 1],
+  paolo: ['#C68863', '#5B5B5B', '#3F5E3A', 0], sara: ['#EBC2A0', '#B07A35', '#8F3F3F', 1], chiara: ['#B97A55', '#2B1D16', '#9C5B2E', 1],
+  ada: ['#E9C9AE', '#6B4E9B', '#2F45C9', 1], vera: ['#D8B49A', '#1F3A5F', '#16181D', 1], elio: ['#E2B58F', '#7A4A2B', '#0F766E', 0],
+  nora: ['#F0CFB4', '#A0522D', '#0F766E', 1], teo: ['#C99573', '#2E2E2E', '#0F766E', 0], ugo: ['#DDB08B', '#5C3D2E', '#0F766E', 0],
+  lia: ['#E7BE9C', '#3A2A4F', '#0F766E', 1], rex: ['#BF8763', '#1E1E1E', '#7A2E2E', 0], bruno: ['#D6A07A', '#4A3426', '#0F766E', 0],
+  ivo: ['#EAC4A4', '#6E6E6E', '#0F766E', 0], mia: ['#F2D2B6', '#C6893F', '#0F766E', 1], dario: ['#C48A64', '#3A2B22', '#0F766E', 0],
+  oli: ['#E0B691', '#2F4F4F', '#0F766E', 0], kai: ['#D3A07E', '#4B3B2F', '#0F766E', 0], sam: ['#E5BD9B', '#5A3E6B', '#0F766E', 1]
+};
+var PEOPLE = {
+  marco: { name: 'Marco R.', role: 'Sponsor', real: true }, laura: { name: 'Laura B.', role: 'Cliente · utente chiave', real: true },
+  giulia: { name: 'Giulia F.', role: 'Project Manager', real: true }, paolo: { name: 'Paolo D.', role: 'Architetto', real: true },
+  sara: { name: 'Sara M.', role: 'Operations', real: true }, chiara: { name: 'Chiara T.', role: 'Product Owner', real: true },
+  ada: { name: 'Ada', role: 'Coordinatore PM', agents: [['Coordinatore PM', 'Claude Opus'], ['Pianificazione e controllo', 'Claude Sonnet'], ['Reporting', 'Claude Sonnet']] },
+  vera: { name: 'Vera', role: 'Verifica dei gate', agents: [['Gatekeeper', 'Claude Opus']] },
+  elio: { name: 'Elio', role: 'Analisi requisiti', agents: [['Raccolta requisiti', 'Claude Sonnet'], ['Specifica requisiti', 'Claude Sonnet'], ['Ricerca Jira e Confluence', 'Rovo · A2A']] },
+  nora: { name: 'Nora', role: 'Validazione requisiti', agents: [['Validatore requisiti', 'gpt-oss-120b']] },
+  teo: { name: 'Teo', role: 'Tracciabilità', agents: [['Tracciabilità', 'gpt-oss-120b']] },
+  ugo: { name: 'Ugo', role: 'Avvio progetto', agents: [['Business case', 'Claude Sonnet'], ['Fattibilità', 'Claude Opus'], ['Project charter', 'Claude Sonnet']] },
+  lia: { name: 'Lia', role: 'Progettazione', agents: [['Architettura', 'Claude Opus'], ['Design di dettaglio', 'gpt-oss-120b'], ['Modello dati', 'gpt-oss-120b']] },
+  rex: { name: 'Rex', role: 'Security by design', agents: [['Threat modeling', 'Claude Opus']] },
+  bruno: { name: 'Bruno', role: 'Sviluppo', agents: [['Sviluppatore (per componente)', 'Claude Agent SDK'], ['Unit test', 'oss-coder']] },
+  ivo: { name: 'Ivo', role: 'Code review', agents: [['Revisore codice', 'gpt-oss-120b']] },
+  mia: { name: 'Mia', role: 'Test', agents: [['Test di integrazione', 'oss-coder'], ['Test di sistema', 'oss-coder'], ['Test non funzionali', 'oss-coder'], ['Analisi difetti', 'gpt-oss-120b']] },
+  dario: { name: 'Dario', role: 'Rilascio', agents: [['Piano di rilascio', 'Claude Sonnet'], ['Deploy', 'oss-light'], ['Documentazione', 'Claude Sonnet']] },
+  oli: { name: 'Oli', role: 'Esercizio', agents: [['Monitoraggio', 'oss-light'], ['Incidenti', 'gpt-oss-120b'], ['Manutenzione', 'Claude Agent SDK']] },
+  kai: { name: 'Kai', role: 'Chiusura', agents: [['Lessons learned', 'Claude Sonnet'], ['Chiusura progetto', 'Claude Sonnet']] },
+  sam: { name: 'Sam', role: 'Scrum Master', agents: [['Facilitazione cerimonie', 'Claude Sonnet'], ['Gestione impedimenti', 'Claude Sonnet']] }
+};
+var TASKS = {
+  's-refine': [['Raffinamento delle user story', '0 10 * * 2,4', 'martedì e giovedì alle 10:00', 'ultima oggi 10:00 · 4 storie aggiornate'], ['Scrittura criteri di accettazione', '0 15 * * 1-5', 'feriali alle 15:00', 'prossima oggi 15:00']],
+  's-ready': [['Verifica Definition of Ready', '0 9 * * 1-5', 'feriali alle 09:00', 'ultima oggi 09:00 · 2 storie non pronte'], ['Controllo stime e dipendenze', '0 16 * * 3', 'mercoledì alle 16:00', 'prossima mercoledì 16:00']],
+  's-sm': [['Preparazione daily', '45 8 * * 1-5', 'feriali alle 08:45', 'ultima oggi 08:45 · completata'], ['Raccolta impedimenti', '0 13 * * 1-5', 'feriali alle 13:00', 'ultima oggi 13:00 · 1 impedimento'], ['Preparazione retrospettiva', '0 14 * * 5', 'venerdì alle 14:00', 'a fine sprint']],
+  's-dev': [['Sviluppo elementi dello sprint backlog', '0 9 * * 1-5', 'feriali alle 09:00', 'in corso · 3 elementi aperti'], ['Aggiornamento sprint backlog', '0 18 * * 1-5', 'feriali alle 18:00', 'prossima oggi 18:00']],
+  's-review': [['Review delle pull request', '0 */2 * * 1-5', 'ogni 2 ore, feriali', 'ultima oggi 12:00 · 2 review']],
+  's-test': [['Test di regressione', '0 7 * * 1-5', 'feriali alle 07:00', 'ultima oggi 07:00 · superati'], ['Test delle storie completate', '0 */3 * * 1-5', 'ogni 3 ore, feriali', 'ultima oggi 12:00']],
+  's-done': [['Verifica Definition of Done', '0 17 * * 1-5', 'feriali alle 17:00', 'prossima oggi 17:00'], ['Evidenze per la sprint review', '0 12 * * 5', 'venerdì alle 12:00', 'a fine sprint']],
+  's-metrics': [['Aggiornamento burndown', '0 19 * * 1-5', 'feriali alle 19:00', 'ultima ieri 19:00 · in linea'], ['Calcolo velocity', '0 9 * * 1', 'lunedì alle 09:00', 'ultima lunedì 09:00']],
+  's-release': [['Verifica rilasciabilità incremento', '0 10 * * 5', 'venerdì alle 10:00', 'a fine sprint'], ['Release notes', '0 16 * * 5', 'venerdì alle 16:00', 'a fine sprint']],
+  's-coord': [['Lettura decisioni del Product Owner', '*/30 8-19 * * 1-5', 'ogni 30 minuti, 8–19 feriali', 'ultima oggi 12:30 · nessuna novità'], ['Report di fine sprint', '0 18 * * 5', 'venerdì alle 18:00', 'a fine sprint']],
+  elio: [['Raccolta requisiti dalle fonti', '0 9 * * 1-5', 'feriali alle 09:00', 'ultima oggi 09:00 · completata'], ['Aggiornamento SRS', '0 14 * * 1-5', 'feriali alle 14:00', 'prossima oggi 14:00'], ['Sintesi incontri con il cliente', '0 18 * * 1-5', 'feriali alle 18:00', 'prossima oggi 18:00']],
+  nora: [['Verifica validità requisiti', '0 10 * * 1-5', 'feriali alle 10:00', 'ultima oggi 10:00 · 3 segnalazioni'], ['Controllo ambiguità e conflitti', '0 15 * * 1-5', 'feriali alle 15:00', 'prossima oggi 15:00'], ['Verifica testabilità dei requisiti', '0 11 * * 3', 'mercoledì alle 11:00', 'prossima mercoledì 11:00']],
+  teo: [['Aggiornamento matrice di tracciabilità', '0 */4 * * 1-5', 'ogni 4 ore, feriali', 'ultima oggi 12:00 · completata'], ['Segnalazione requisiti senza copertura', '30 17 * * 5', 'venerdì alle 17:30', 'prossima venerdì 17:30']],
+  vera: [['Verifica criteri di gate', '0 8 * * 1-5', 'feriali alle 08:00', 'ultima oggi 08:00 · 2 criteri aperti'], ['Preparazione pacchetto evidenze', '0 16 * * 5', 'venerdì alle 16:00', 'prossima venerdì 16:00']],
+  ada: [['Lettura decisioni di gate', '*/30 8-19 * * 1-5', 'ogni 30 minuti, 8–19 feriali', 'ultima oggi 12:30 · nessuna novità'], ['Avanzamento rispetto al piano', '0 9 * * 1', 'lunedì alle 09:00', 'ultima lunedì 09:00 · in linea'], ['Report settimanale agli stakeholder', '0 17 * * 5', 'venerdì alle 17:00', 'prossima venerdì 17:00 · invio dopo revisione']],
+  sam: [['Preparazione daily', '45 8 * * 1-5', 'feriali alle 08:45', 'ultima oggi 08:45 · completata'], ['Raccolta impedimenti', '0 13 * * 1-5', 'feriali alle 13:00', 'prossima oggi 13:00']]
+};
+var DEFAULT_TASKS = [['Esecuzione compiti di fase', '0 10 * * 1-5', 'feriali alle 10:00', 'attivo solo nella sua fase'], ['Rapporto al Coordinatore PM', '0 17 * * 1-5', 'feriali alle 17:00', 'attivo solo nella sua fase']];
+var HUMAN_TASKS = {
+  's-po': [['Approvazione Definition of Ready', '2 storie in attesa'], ['Conferma dello Sprint Goal', 'allo sprint planning'], ['Accettazione incremento', 'alla sprint review']],
+  's-techlead': [['Approvazione piano di sprint', 'allo sprint planning'], ['Approvazione Definition of Done', 'nessuna in attesa']],
+  's-ops': [['Go per il rilascio', 'nessuno in attesa']], 's-stake': [['Partecipazione alla sprint review', 'a fine sprint']],
+  's-client': [['Feedback sull\'incremento', 'alla sprint review']],
+  laura: [['Approvazione gate «Sign-off requisiti»', 'in attesa da 1 giorno'], ['Conferma requisiti con il team', 'su richiesta']],
+  giulia: [['Revisione report settimanale', 'venerdì, dopo il report di Ada'], ['Approvazione change request', 'nessuna in attesa']],
+  marco: [['Approvazione gate di fase', 'nessuno in attesa'], ['Approvazione variazioni di budget', 'nessuna in attesa']],
+  paolo: [['Approvazione design review', 'nessuna in attesa'], ['Consulenza su vincoli tecnici', 'su richiesta']],
+  sara: [['Go per deploy in produzione', 'nessuno in attesa'], ['Fine hypercare', 'nessuna in attesa']],
+  chiara: [['Priorità del product backlog', 'prima di ogni sprint planning'], ['Accettazione incremento', 'alla sprint review']]
+};
+var LOGS = {
+  's-sm': [['oggi 13:00', 'Raccolta impedimenti', 'warn', 'Impedimento: ambiente di test non disponibile, segnalato al tech lead'], ['oggi 08:45', 'Preparazione daily', 'ok', 'Sintesi della daily inviata al team']],
+  's-ready': [['oggi 09:00', 'Verifica Definition of Ready', 'warn', '2 storie senza criteri di accettazione rimandate al raffinamento'], ['ieri 09:00', 'Verifica Definition of Ready', 'ok', '6 storie pronte per lo sprint planning']],
+  's-dev': [['oggi 11:20', 'Sviluppo elementi dello sprint backlog', 'ok', 'Storia completata e inviata in code review'], ['ieri 18:00', 'Aggiornamento sprint backlog', 'ok', 'Stime residue aggiornate']],
+  nora: [['oggi 10:00', 'Verifica validità requisiti', 'warn', '3 requisiti ambigui segnalati al ruolo Analisi requisiti'], ['ieri 15:00', 'Controllo ambiguità e conflitti', 'ok', 'Nessun conflitto tra requisiti'], ['ieri 10:00', 'Verifica validità requisiti', 'ok', '42 requisiti verificati']],
+  elio: [['oggi 09:00', 'Raccolta requisiti dalle fonti', 'ok', '5 nuovi requisiti da Jira e Confluence tramite Rovo'], ['ieri 18:00', 'Sintesi incontri con il cliente', 'ok', 'Verbale del workshop aggiunto alla SRS'], ['ieri 14:00', 'Aggiornamento SRS', 'ok', 'SRS aggiornata alla versione 0.4']],
+  vera: [['oggi 08:00', 'Verifica criteri di gate', 'warn', 'Aperti: requisiti approvati dal cliente, requisiti verificabili'], ['ieri 08:00', 'Verifica criteri di gate', 'warn', 'Tre criteri aperti']],
+  ada: [['oggi 12:30', 'Lettura decisioni di gate', 'ok', 'Nessuna decisione nuova'], ['lunedì 09:00', 'Avanzamento rispetto al piano', 'ok', 'Fase requisiti in linea con il piano']]
+};
+var W_PHASES = [
+  ['avvio', 'Avvio', ['ugo', 'giulia', 'vera'], ['marco'], ['laura', 'paolo'], ['ada']],
+  ['pianificazione', 'Pianificazione', ['ada', 'giulia', 'vera'], ['marco'], ['paolo', 'sara'], ['laura']],
+  ['requisiti', 'Requisiti', ['elio', 'nora', 'teo', 'vera'], ['giulia'], ['laura', 'paolo'], ['marco', 'ada']],
+  ['progettazione', 'Progettazione', ['lia', 'rex', 'vera'], ['paolo'], ['sara', 'teo'], ['giulia']],
+  ['implementazione', 'Implementazione', ['bruno', 'ivo', 'vera'], ['paolo'], ['lia'], ['giulia', 'mia']],
+  ['test', 'Test', ['mia', 'vera'], ['giulia'], ['bruno', 'laura'], ['marco']],
+  ['rilascio', 'Rilascio', ['dario', 'vera'], ['giulia'], ['paolo', 'sara'], ['laura', 'marco']],
+  ['esercizio', 'Esercizio', ['oli'], ['sara'], ['paolo'], ['giulia']],
+  ['chiusura', 'Chiusura', ['kai', 'vera'], ['marco'], ['giulia'], ['laura']]
+];
+var ROLE_DEF = {
+  's-po': ['Product Owner', 'chiara'], 's-techlead': ['Tech lead', 'paolo'], 's-ops': ['Operations', 'sara'],
+  's-stake': ['Stakeholder', 'marco'], 's-client': ['Cliente · utente chiave', 'laura'],
+  's-coord': ['Coordinatore agile', 'ada'], 's-sm': ['Scrum Master', 'sam'], 's-refine': ['Raffinamento backlog', 'elio'],
+  's-ready': ['Verifica Definition of Ready', 'nora'], 's-dev': ['Developers', 'bruno'], 's-review': ['Code review', 'ivo'],
+  's-test': ['Test e integrazione', 'mia'], 's-done': ['Verifica Definition of Done', 'vera'], 's-metrics': ['Metriche e burndown', 'teo'],
+  's-release': ['Rilascio incremento', 'dario']
+};
+var A_PHASES = [
+  ['backlog', 'Product backlog', ['s-refine', 's-ready'], ['s-po'], ['s-client', 's-stake', 's-techlead'], ['s-coord']],
+  ['planning', 'Sprint planning', ['s-dev', 's-sm'], ['s-po'], ['s-techlead'], ['s-stake', 's-coord']],
+  ['sprint', 'Sprint in corso', ['s-dev', 's-review', 's-test', 's-sm', 's-metrics'], ['s-techlead'], ['s-po'], ['s-coord', 's-stake']],
+  ['review', 'Sprint review', ['s-dev', 's-done', 's-sm'], ['s-po'], ['s-client', 's-stake'], ['s-coord']],
+  ['retro', 'Retrospettiva', ['s-sm', 's-dev'], ['s-techlead'], ['s-po'], ['s-coord']],
+  ['release', 'Rilascio incremento', ['s-release', 's-done'], ['s-ops'], ['s-techlead'], ['s-po', 's-client']]
+];
+var PROJECTS = [
+  { id: 'p1', name: 'Portale prenotazioni', client: '[CLIENTE A] · esempio', model: 'w', current: 'requisiti' },
+  { id: 'p2', name: 'App fidelity', client: '[CLIENTE B] · esempio', model: 'a', current: 'sprint' },
+  { id: 'p3', name: 'Gestionale magazzino', client: '[CLIENTE C] · esempio', model: 'w', current: 'progettazione' }
+];
+var LETTERS = [['R', 'Responsabile'], ['A', 'Approva e risponde'], ['C', 'Consultato'], ['I', 'Informato']];
+
+class Component extends DCLogic {
+  face(id, selected) {
+    var rd = ROLE_DEF[id], pid = rd ? rd[1] : id;
+    var p = PEOPLE[pid], lk = LOOK[pid], real = !!p.real;
+    return {
+      id: id, name: p.name, role: rd ? rd[0] : p.role, isAgent: !real,
+      skin: lk[0], hair: lk[1], shirt: lk[2],
+      sides: lk[3] ? 'M12.5 19 Q11 31 15 34 L16 21 Z M31.5 19 Q33 31 29 34 L28 21 Z' : 'M22 9 Z',
+      bg: real ? '#EEF0FB' : '#E3F4EF', ring: real ? '#2A3AA8' : '#0B6B53', dash: real ? 'none' : '3 2.5',
+      typeLabel: real ? 'Umano' : 'Avatar',
+      tagStyle: real ? 'font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #EEF0FB; color: #2A3AA8; font-weight: 600' : 'font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #E3F4EF; color: #0B5E4A; font-weight: 600',
+      isGroup: !real && p.agents.length > 1, groupLabel: real ? '' : p.agents.length + ' agenti',
+      agents: real ? [] : p.agents.map(function (a) { return { n: a[0], m: a[1] }; }),
+      pressed: selected ? 'true' : 'false',
+      style: 'display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; background: #FFFFFF; cursor: pointer; border-radius: 10px; color: #16181D; min-height: 60px; border: ' + (selected ? '2px solid ' + AC : '1px solid #DEDCD3')
+    };
+  }
+  renderVals() {
+    var self = this, s = this.state || {};
+    var proj = PROJECTS.find(function (p) { return p.id === (s.proj || 'p1'); });
+    var defs = proj.model === 'w' ? W_PHASES : A_PHASES;
+    var curIdx = defs.findIndex(function (d) { return d[0] === proj.current; });
+    var phaseId = s.phase && defs.some(function (d) { return d[0] === s.phase; }) ? s.phase : proj.current;
+    var def = defs.find(function (d) { return d[0] === phaseId; });
+    var all = def[2].concat(def[3], def[4], def[5]);
+    var personId = all.indexOf(s.person) >= 0 ? s.person : def[2][0];
+    var selIdx = [def[2], def[3], def[4], def[5]].findIndex(function (g) { return g.indexOf(personId) >= 0; });
+
+    var projects = PROJECTS.map(function (p) {
+      var on = p.id === proj.id;
+      var pd = p.model === 'w' ? W_PHASES : A_PHASES;
+      return {
+        id: p.id, name: p.name, client: p.client, modelLabel: p.model === 'w' ? 'Waterfall' : 'Agile · Scrum',
+        currentLabel: 'Fase: ' + pd.find(function (d) { return d[0] === p.current; })[1],
+        pressed: on ? 'true' : 'false',
+        style: 'text-align: left; padding: 12px 14px; border-radius: 12px; background: #FFFFFF; color: #16181D; cursor: pointer; border: ' + (on ? '2px solid ' + AC : '1px solid #DEDCD3'),
+        pick: function () { self.setState({ proj: p.id, phase: null, person: null, msg: null }); }
+      };
+    });
+
+    var phases = defs.map(function (d, i) {
+      var st = i < curIdx ? 'done' : (i === curIdx ? 'active' : 'future');
+      var on = d[0] === phaseId;
+      var bg = st === 'active' ? AC : (st === 'done' ? '#FFFFFF' : '#F5F4EF');
+      var fg = st === 'active' ? '#FFFFFF' : (st === 'done' ? '#16181D' : '#4A4E57');
+      var border = on ? (st === 'active' ? '3px solid #16181D' : '2px solid ' + AC) : (st === 'future' ? '1px dashed #B9B7AE' : '1px solid #C9C7BE');
+      return {
+        name: d[1], statusLabel: st === 'done' ? 'completata' : (st === 'active' ? 'in corso' : 'da iniziare'),
+        subStyle: st === 'active' ? 'color: #DDE2FF' : 'color: #5A5F6A',
+        pressed: on ? 'true' : 'false', arrow: i < defs.length - 1,
+        style: 'text-align: left; min-height: 48px; padding: 6px 12px; border-radius: 10px; cursor: pointer; background: ' + bg + '; color: ' + fg + '; border: ' + border,
+        pick: function () { self.setState({ phase: d[0], person: null, msg: null }); }
+      };
+    });
+
+    var raci = LETTERS.map(function (L, k) {
+      var ids = def[2 + k];
+      return {
+        letter: L[0], label: L[1], empty: ids.length === 0,
+        people: ids.map(function (id) {
+          var f = self.face(id, id === personId);
+          f.pick = function () { self.setState({ person: id, msg: null }); };
+          return f;
+        })
+      };
+    });
+
+    var sel = this.face(personId, true);
+    var queued = (s.queued || []).filter(function (q) { return q.pid === personId; });
+    var tasks, log;
+    if (sel.isAgent) {
+      tasks = (TASKS[personId] || DEFAULT_TASKS).map(function (t) {
+        return { name: t[0], cron: t[1], human: t[2], status: t[3], btn: 'Esegui ora',
+          run: function () {
+            var q = (self.state && self.state.queued) || [];
+            self.setState({ queued: [{ pid: personId, task: t[0] }].concat(q), msg: 'Richiesta inviata: «' + t[0] + '» parte ora, fuori dalla pianificazione. L\'esito comparirà nel registro.' });
+          } };
+      });
+      var base = (LOGS[personId] || [['—', 'Nessuna esecuzione', 'idle', 'Gli agenti di questa fase partono quando la fase è attiva']]);
+      log = queued.map(function (q) { return { when: 'adesso', task: q.task, out: 'in coda', outStyle: 'font-size: 12px; color: #1F2F93; font-weight: 600', detail: 'Esecuzione manuale richiesta dalla console' }; })
+        .concat(base.map(function (l) {
+          var map = { ok: ['completata', '#0B5E4A'], warn: ['con segnalazioni', '#8A4B00'], idle: ['', '#5A5F6A'] };
+          return { when: l[0], task: l[1], out: map[l[2]][0], outStyle: 'font-size: 12px; font-weight: 600; color: ' + map[l[2]][1], detail: l[3] };
+        }));
+    } else {
+      tasks = (HUMAN_TASKS[personId] || []).map(function (t) {
+        return { name: t[0], cron: 'su richiesta', human: 'notifica in console', status: t[1], btn: 'Apri',
+          run: function () { self.setState({ msg: 'Aperta la scheda «' + t[0] + '» nella coda decisioni.' }); } };
+      });
+      log = [{ when: 'ieri 17:20', task: 'Accesso alla console', out: '', outStyle: '', detail: 'Ultima decisione registrata nell\'audit' }];
+    }
+
+    return {
+      projects: projects, proj: proj, projId: proj.id,
+      onProject: function (e) { self.setState({ proj: e.target.value, phase: null, person: null, msg: null }); },
+      model: { label: proj.model === 'w' ? 'Waterfall' : 'Agile · Scrum' },
+      currentName: defs[curIdx][1], isAgile: proj.model === 'a',
+      phases: phases, phase: { name: def[1] }, raci: raci,
+      sel: sel, selRaci: LETTERS[selIdx][0] + ' · ' + LETTERS[selIdx][1].toLowerCase(),
+      tasks: tasks, log: log,
+      tasksTitle: sel.isAgent ? 'Compiti pianificati' : 'Compiti e decisioni',
+      logTitle: sel.isAgent ? 'Attività svolte in modalità agentica' : 'Ultime attività',
+      hasMsg: !!s.msg, msg: s.msg || ''
+    };
+  }
+}
+</script>
+</body>
+</html>

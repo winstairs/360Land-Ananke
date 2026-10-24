@@ -1,0 +1,14 @@
+.env
+*.db
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+frontend/dist/
+.DS_Store
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Machine-specific CA certificates for Docker builds
+certs/*.crt

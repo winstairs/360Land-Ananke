@@ -1,0 +1,12 @@
+# Gateway LiteLLM. I modelli NON si scrivono qui: la fonte è il catalogo LLM di Ananke
+# (models/platform/llm-catalog.json e le versioni salvate dalla scheda «Modelli AI»).
+# Il worker lo sincronizza a intervalli tramite l'API di gestione modelli (/model/new, /model/delete),
+# che salva i modelli nel database "litellm". Le chiavi restano nel file .env: il catalogo cita solo
+# il nome della variabile (os.environ/NOME).
+# Usare solo funzioni del core MIT: niente funzioni della cartella enterprise.
+model_list: []
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_model_in_db: true

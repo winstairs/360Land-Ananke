@@ -1,0 +1,5 @@
+[
+  { "id": "p1", "name": "Portale prenotazioni", "client": "[CLIENTE A] · esempio", "methodology": "waterfall", "currentStage": "requirements" },
+  { "id": "p2", "name": "App fidelity", "client": "[CLIENTE B] · esempio", "methodology": "scrum", "currentStage": "sprint", "sprint": 3 },
+  { "id": "p3", "name": "Gestionale magazzino", "client": "[CLIENTE C] · esempio", "methodology": "waterfall", "currentStage": "design" }
+]

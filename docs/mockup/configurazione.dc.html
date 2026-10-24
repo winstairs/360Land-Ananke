@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Ananke · Configurazione</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F4EF}
+a{color:#2F45C9}a:hover{color:#1F2F93}
+button,input,select{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4EF; color: #16181D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: #16181D; color: #F5F4EF">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2" fill="#F5F4EF"></rect><rect x="16" y="2" width="10" height="10" rx="2" fill="#8C9BF0"></rect><rect x="2" y="16" width="10" height="10" rx="2" fill="#8C9BF0"></rect><rect x="16" y="16" width="10" height="10" rx="2" fill="#F5F4EF"></rect></svg>
+<div>
+<div style="font-weight: 600; font-size: 17px">Ananke</div>
+<div style="font-size: 12px; color: #C9CBD1">Configurazione · dati di esempio</div>
+</div>
+</div>
+<nav aria-label="Sezioni" style="display: flex; gap: 6px">
+<a href="Main.dc.html" style="padding: 8px 14px; border-radius: 8px; color: #C9CBD1; text-decoration: none; font-size: 14px; border: 1px solid #3A3E47">Console</a>
+<a href="Config.dc.html" aria-current="page" style="padding: 8px 14px; border-radius: 8px; color: #16181D; background: #F5F4EF; text-decoration: none; font-size: 14px; font-weight: 600">Configurazione</a>
+</nav>
+</header>
+
+<div style="max-width: 1440px; margin: 0 auto; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<section aria-label="Progetto e salvataggio" style="background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 320px; min-width: 0">
+<label for="cfg-project" style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase">Progetto da configurare</label>
+<select id="cfg-project" value="{{projId}}" onChange="{{onProject}}" style="min-height: 44px; max-width: 420px; width: 100%; padding: 8px 12px; border: 1px solid #C9C7BE; border-radius: 8px; background: #FFFFFF; color: #16181D; font-size: 16px; font-weight: 600; cursor: pointer">
+<sc-for list="{{projects}}" as="pr" hint-placeholder-count="3">
+<option value="{{pr.id}}">{{pr.label}}</option>
+</sc-for>
+</select>
+<div style="font-size: 13px; color: #5A5F6A">Modello {{modelLabel}} · {{roleCount}} ruoli nella matrice RACI · {{personaCount}} persone e avatar a catalogo</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<span style="{{checkStyle}}">{{checkLabel}}</span>
+<button type="button" onClick="{{save}}" style="min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 1px solid #2F45C9; background: #2F45C9; color: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer">Salva configurazione</button>
+</div>
+<sc-if value="{{hasMsg}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="flex: 1 1 100%; font-size: 13px; padding: 10px 12px; border-radius: 8px; {{msgStyle}}">{{msg}}</div>
+</sc-if>
+</section>
+
+<div role="tablist" aria-label="Aree di configurazione" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{tabs}}" as="tb" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{tb.selected}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{tabRoles}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section aria-label="Ruoli" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 18px; font-weight: 600">Ruoli e persona assegnata</h2>
+<div style="font-size: 13px; color: #5A5F6A; margin-bottom: 14px">Ogni ruolo della matrice RACI punta a una persona del catalogo: un umano o un avatar. I ruoli che approvano un gate (A) accettano solo umani.</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="8">
+<div style="{{r.style}}">
+<button type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" style="display: flex; flex-direction: column; flex: 1 1 200px; min-width: 0; background: none; border: none; padding: 0; text-align: left; cursor: pointer; color: #16181D; min-height: 44px; justify-content: center">
+<span style="font-weight: 600; font-size: 14px">{{r.roleName}}</span>
+<span style="font-size: 12px; color: #5A5F6A">{{r.where}}</span>
+</button>
+<div style="display: flex; align-items: center; gap: 8px; flex: 0 1 220px; min-width: 0">
+<svg width="36" height="36" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{r.p.bg}}" stroke="{{r.p.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{r.p.dash}}"></circle>
+<path d="{{r.p.sides}}" fill="{{r.p.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{r.p.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{r.p.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{r.p.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-weight: 600; font-size: 13px">{{r.p.name}}</span>
+<span style="{{r.p.tagStyle}}">{{r.p.typeLabel}}</span>
+</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; flex: 0 0 200px">
+<label for="{{r.selId}}" style="font-size: 11px; color: #3A3E47; font-weight: 600">Persona</label>
+<select id="{{r.selId}}" value="{{r.personaId}}" onChange="{{r.onAssign}}" style="min-height: 38px; padding: 4px 8px; border: 1px solid #C9C7BE; border-radius: 6px; background: #FFFFFF; font-size: 13px; color: #16181D">
+<optgroup label="Umani">
+<sc-for list="{{r.humanOpts}}" as="o" hint-placeholder-count="5">
+<option value="{{o.id}}">{{o.label}}</option>
+</sc-for>
+</optgroup>
+<optgroup label="{{r.avatarGroup}}">
+<sc-for list="{{r.avatarOpts}}" as="o" hint-placeholder-count="8">
+<option value="{{o.id}}" disabled="{{o.disabled}}">{{o.label}}</option>
+</sc-for>
+</optgroup>
+</select>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Dettaglio ruolo" style="flex: 1 1 400px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase">Ruolo</div>
+<h2 style="margin: 2px 0 0; font-size: 20px; font-weight: 600">{{rd.roleName}}</h2>
+<div style="font-size: 13px; color: #5A5F6A">{{rd.where}}</div>
+<sc-if value="{{rd.isA}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 8px; font-size: 13px; color: #1F2F93; background: #EEF0FB; border-radius: 8px; padding: 8px 10px">Approva in {{rd.aPhases}}: solo persone umane</div>
+</sc-if>
+</div>
+<div style="display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid #DEDCD3; border-radius: 10px">
+<svg width="56" height="56" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{rd.p.bg}}" stroke="{{rd.p.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{rd.p.dash}}"></circle>
+<path d="{{rd.p.sides}}" fill="{{rd.p.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{rd.p.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{rd.p.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{rd.p.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<div style="min-width: 0; flex: 1 1 auto">
+<div style="font-weight: 600">{{rd.p.name}}</div>
+<div style="font-size: 12px; color: #5A5F6A">{{rd.p.title}}</div>
+<div style="margin-top: 4px"><span style="{{rd.p.tagStyle}}">{{rd.p.typeLabel}}</span></div>
+</div>
+<button type="button" onClick="{{rd.editPersona}}" style="min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid #2F45C9; background: #FFFFFF; color: #2F45C9; font-size: 13px; cursor: pointer">Modifica persona</button>
+</div>
+
+<sc-if value="{{rd.isAvatar}}" hint-placeholder-val="{{ true }}">
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">Compiti standard del ruolo</div>
+<sc-for list="{{rd.tasks}}" as="t" hint-placeholder-count="3">
+<div style="border: 1px solid #DEDCD3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px">
+<input id="{{t.chkId}}" type="checkbox" checked="{{t.on}}" onChange="{{t.onToggle}}" style="width: 18px; height: 18px">
+<label for="{{t.chkId}}" style="font-weight: 600; font-size: 14px">{{t.name}}</label>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<label for="{{t.cronId}}" style="font-size: 12px; color: #3A3E47">Cron</label>
+<input id="{{t.cronId}}" type="text" value="{{t.cron}}" onChange="{{t.onCron}}" style="width: 160px; min-height: 36px; padding: 4px 8px; border: 1px solid {{t.cronBorder}}; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #16181D">
+<span style="font-size: 12px; {{t.previewStyle}}">{{t.preview}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{rd.isHuman}}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">Compiti e decisioni del ruolo</div>
+<sc-for list="{{rd.humanTasks}}" as="h" hint-placeholder-count="2">
+<div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid #DEDCD3; border-radius: 8px; margin-bottom: 6px; font-size: 13px">
+<span style="font-weight: 600">{{h.n}}</span>
+<span style="color: #5A5F6A">notifica in console</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{tabPeople}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Catalogo persone e avatar" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 14px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Persone e avatar</h2>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" onClick="{{addHuman}}" style="min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid #2A3AA8; background: #FFFFFF; color: #2A3AA8; font-size: 13px; cursor: pointer">Nuova persona umana</button>
+<button type="button" onClick="{{addAvatar}}" style="min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid #0B6B53; background: #FFFFFF; color: #0B5E4A; font-size: 13px; cursor: pointer">Nuovo avatar</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px">
+<sc-for list="{{catalog}}" as="c" hint-placeholder-count="10">
+<button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">
+<svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{c.bg}}" stroke="{{c.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{c.dash}}"></circle>
+<path d="{{c.sides}}" fill="{{c.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{c.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{c.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{c.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<span style="display: flex; flex-direction: column; min-width: 0; text-align: left">
+<span style="font-weight: 600; font-size: 14px">{{c.name}}</span>
+<span style="font-size: 12px; color: #5A5F6A">{{c.title}}</span>
+<span style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; align-items: center">
+<span style="{{c.tagStyle}}">{{c.typeLabel}}</span>
+<span style="font-size: 11px; color: #5A5F6A">{{c.usage}}</span>
+</span>
+</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Dettaglio persona" style="flex: 1 1 400px; min-width: 0; background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; gap: 14px; align-items: center">
+<svg width="64" height="64" viewBox="0 0 44 44" aria-hidden="true" style="flex: 0 0 auto">
+<circle cx="22" cy="22" r="20.5" fill="{{pe.bg}}" stroke="{{pe.ring}}" style="stroke-width: 1.5; stroke-dasharray: {{pe.dash}}"></circle>
+<path d="{{pe.sides}}" fill="{{pe.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{pe.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{pe.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{pe.hair}}"></path>
+<circle cx="18.6" cy="21" r="1.15" fill="#1B1E23"></circle>
+<circle cx="25.4" cy="21" r="1.15" fill="#1B1E23"></circle>
+<path d="M19.2 24.6 Q22 26.8 24.8 24.6" fill="none" stroke="#1B1E23" style="stroke-width: 1.2; stroke-linecap: round"></path>
+</svg>
+<div style="min-width: 0; flex: 1 1 auto">
+<label for="pe-name" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Nome sul badge</label>
+<input id="pe-name" type="text" value="{{pe.name}}" onChange="{{pe.onName}}" style="width: 100%; box-sizing: border-box; min-height: 40px; padding: 6px 10px; border: 1px solid #C9C7BE; border-radius: 8px; font-size: 15px; font-weight: 600; color: #16181D">
+<div style="margin-top: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap"><span style="{{pe.tagStyle}}">{{pe.typeLabel}}</span><span style="font-size: 12px; color: #5A5F6A">{{pe.usage}}</span></div>
+</div>
+</div>
+
+<div>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase; margin-bottom: 6px">Volto</div>
+<div role="group" aria-label="Scegli il volto" style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{pe.faces}}" as="f" hint-placeholder-count="6">
+<button type="button" onClick="{{f.pick}}" aria-label="{{f.label}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">
+<svg width="36" height="36" viewBox="0 0 44 44" aria-hidden="true">
+<circle cx="22" cy="22" r="20.5" fill="{{pe.bg}}"></circle>
+<path d="{{f.sides}}" fill="{{f.hair}}"></path>
+<path d="M10 41 Q22 28 34 41 Z" fill="{{f.shirt}}"></path>
+<circle cx="22" cy="20" r="9.5" fill="{{f.skin}}"></circle>
+<path d="M12.5 19 Q13 9 22 9 Q31 9 31.5 19 Q28 13.5 22 13.5 Q16 13.5 12.5 19 Z" fill="{{f.hair}}"></path>
+</svg>
+</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{pe.isHuman}}" hint-placeholder-val="{{ false }}">
+<div>
+<label for="pe-email" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Email</label>
+<input id="pe-email" type="email" value="{{pe.email}}" onChange="{{pe.onEmail}}" placeholder="nome@azienda.it" style="width: 100%; box-sizing: border-box; min-height: 40px; padding: 6px 10px; border: 1px solid #C9C7BE; border-radius: 8px; font-size: 14px; color: #16181D">
+</div>
+</sc-if>
+
+<sc-if value="{{pe.isAvatar}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px">
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #5A5F6A; text-transform: uppercase">Agenti dell'avatar</div>
+<button type="button" onClick="{{pe.addAgent}}" style="min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 1px solid #0B6B53; background: #FFFFFF; color: #0B5E4A; font-size: 13px; cursor: pointer">Aggiungi agente</button>
+</div>
+<sc-if value="{{pe.noAgents}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="font-size: 13px; color: #8A1F1F; background: #FBECEC; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px">Un avatar senza agenti non può svolgere compiti: aggiungine almeno uno.</div>
+</sc-if>
+<sc-for list="{{pe.agents}}" as="ag" hint-placeholder-count="2">
+<div style="border: 1px solid #DEDCD3; border-radius: 10px; margin-bottom: 8px; overflow: hidden">
+<button type="button" onClick="{{ag.toggle}}" aria-expanded="{{ag.openStr}}" style="width: 100%; display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 12px; background: #F5F4EF; border: none; cursor: pointer; text-align: left; color: #16181D; min-height: 44px">
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600; font-size: 14px">{{ag.n}}</span><span style="font-size: 12px; color: #5A5F6A">{{ag.summary}}</span></span>
+<span style="font-size: 12px; color: #2F45C9; font-weight: 600; flex: 0 0 auto">{{ag.toggleLabel}}</span>
+</button>
+<sc-if value="{{ag.open}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 12px">
+<div>
+<label for="{{ag.nameId}}" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Nome dell'agente</label>
+<input id="{{ag.nameId}}" type="text" value="{{ag.n}}" onChange="{{ag.onName}}" style="width: 100%; box-sizing: border-box; min-height: 38px; padding: 6px 10px; border: 1px solid #C9C7BE; border-radius: 8px; font-size: 14px; color: #16181D">
+</div>
+<div>
+<label for="{{ag.selId}}" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Preset e modello</label>
+<select id="{{ag.selId}}" value="{{ag.preset}}" onChange="{{ag.onPreset}}" style="min-height: 38px; padding: 4px 8px; border: 1px solid #C9C7BE; border-radius: 6px; background: #FFFFFF; font-size: 13px; color: #16181D">
+<sc-for list="{{presets}}" as="ps" hint-placeholder-count="6">
+<option value="{{ps.id}}">{{ps.label}}</option>
+</sc-for>
+</select>
+<div style="font-size: 12px; color: #5A5F6A; margin-top: 4px">{{ag.modelInfo}}</div>
+</div>
+<div>
+<label for="{{ag.instrId}}" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Istruzioni</label>
+<textarea id="{{ag.instrId}}" rows="4" value="{{ag.instr}}" onChange="{{ag.onInstr}}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #C9C7BE; border-radius: 8px; font-size: 13px; line-height: 1.45; color: #16181D; font-family: inherit; resize: vertical"></textarea>
+</div>
+<div>
+<div style="font-size: 12px; font-weight: 600; color: #3A3E47; margin-bottom: 4px">Autonomia</div>
+<div role="group" aria-label="Autonomia dell'agente" style="display: flex; gap: 4px; flex-wrap: wrap">
+<sc-for list="{{ag.autos}}" as="au" hint-placeholder-count="3">
+<button type="button" onClick="{{au.pick}}" aria-pressed="{{au.pressed}}" style="{{au.style}}">{{au.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5A5F6A; margin-top: 4px">{{ag.autoHint}}</div>
+</div>
+<fieldset style="border: none; padding: 0; margin: 0">
+<legend style="font-size: 12px; font-weight: 600; color: #3A3E47; margin-bottom: 4px; padding: 0">Connettori ammessi</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<sc-for list="{{ag.conns}}" as="cn" hint-placeholder-count="5">
+<span style="display: flex; align-items: center; gap: 6px">
+<input id="{{cn.id}}" type="checkbox" checked="{{cn.on}}" onChange="{{cn.toggle}}" style="width: 18px; height: 18px">
+<label for="{{cn.id}}" style="font-size: 13px">{{cn.label}}</label>
+</span>
+</sc-for>
+</div>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; justify-content: space-between">
+<div>
+<label for="{{ag.iterId}}" style="display: block; font-size: 12px; font-weight: 600; color: #3A3E47">Iterazioni massime per esecuzione</label>
+<input id="{{ag.iterId}}" type="number" min="1" max="200" value="{{ag.maxIt}}" onChange="{{ag.onIter}}" style="width: 110px; min-height: 38px; padding: 4px 8px; border: 1px solid #C9C7BE; border-radius: 6px; font-size: 14px; color: #16181D">
+</div>
+<button type="button" onClick="{{ag.remove}}" style="min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid #B33A3A; background: #FFFFFF; color: #8A1F1F; font-size: 13px; cursor: pointer">Rimuovi agente</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+<input id="deleg-rovo" type="checkbox" checked="{{pe.rovo}}" onChange="{{pe.onRovo}}" style="width: 18px; height: 18px">
+<label for="deleg-rovo">Può delegare ad Atlassian Rovo · A2A</label>
+</div>
+</div>
+</sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{tabPresets}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Preset di agenti" style="background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<h2 style="margin: 0 0 14px; font-size: 18px; font-weight: 600">Preset di agenti</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px">
+<sc-for list="{{presetCards}}" as="pc" hint-placeholder-count="6">
+<div style="border: 1px solid #DEDCD3; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+<span style="font-weight: 600">{{pc.label}}</span>
+<span style="font-size: 12px; color: #5A5F6A">{{pc.uses}}</span>
+</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3A3E47">{{pc.id}}</div>
+<div style="font-size: 13px">Modello: {{pc.model}}</div>
+<div style="font-size: 13px; color: #5A5F6A">Fallback: {{pc.fallback}} · runtime {{pc.runtime}}</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{tabModels}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Modelli e provider" style="background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 18px; font-weight: 600">Modelli e provider</h2>
+<div style="font-size: 13px; color: #5A5F6A; margin-bottom: 14px">Gli agenti usano solo gli alias: tutte le chiamate passano dal gateway LiteLLM.</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px">
+<thead><tr style="text-align: left; color: #5A5F6A"><th scope="col" style="padding: 8px; border-bottom: 1px solid #DEDCD3; font-weight: 600">Alias</th><th scope="col" style="padding: 8px; border-bottom: 1px solid #DEDCD3; font-weight: 600">Provider</th><th scope="col" style="padding: 8px; border-bottom: 1px solid #DEDCD3; font-weight: 600">Esecuzione</th><th scope="col" style="padding: 8px; border-bottom: 1px solid #DEDCD3; font-weight: 600">Modello</th><th scope="col" style="padding: 8px; border-bottom: 1px solid #DEDCD3; font-weight: 600">Licenza</th></tr></thead>
+<tbody>
+<sc-for list="{{models}}" as="m" hint-placeholder-count="6">
+<tr><td style="padding: 8px; border-bottom: 1px solid #ECEAE2; font-family: 'IBM Plex Mono', monospace">{{m.alias}}</td><td style="padding: 8px; border-bottom: 1px solid #ECEAE2">{{m.provider}}</td><td style="padding: 8px; border-bottom: 1px solid #ECEAE2">{{m.deploy}}</td><td style="padding: 8px; border-bottom: 1px solid #ECEAE2">{{m.upstream}}</td><td style="padding: 8px; border-bottom: 1px solid #ECEAE2">{{m.license}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{tabConn}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Connettori" style="background: #FFFFFF; border: 1px solid #DEDCD3; border-radius: 12px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 18px; font-weight: 600">Connettori</h2>
+<div style="font-size: 13px; color: #5A5F6A; margin-bottom: 14px">Gli avatar accedono come utente tecnico dedicato. Scegli il work tracker principale del progetto.</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{connectors}}" as="c" hint-placeholder-count="6">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border: 1px solid #DEDCD3; border-radius: 10px; padding: 10px 14px">
+<div style="min-width: 0; flex: 1 1 260px">
+<div style="font-weight: 600">{{c.name}} <span style="font-weight: 400; color: #5A5F6A">· {{c.category}}</span></div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3A3E47; overflow-wrap: anywhere">{{c.endpoint}}</div>
+</div>
+<span style="{{c.statusStyle}}">{{c.status}}</span>
+<sc-if value="{{c.isTracker}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{c.pick}}" aria-pressed="{{c.primaryStr}}" style="{{c.btnStyle}}">{{c.btnLabel}}</button>
+</sc-if>
+<sc-if value="{{c.isFixed}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; color: #3A3E47; padding: 6px 10px; border-radius: 8px; background: #ECEAE2">{{c.binding}}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+var AC = '#2F45C9';
+var LOOK = {
+  marco: ['#E8B892', '#3B2A20', '#4A5568', 0], laura: ['#F1C7A5', '#8A4B2A', '#7A5C9E', 1], giulia: ['#D9A27E', '#1F1A17', '#2F6F8F', 1],
+  paolo: ['#C68863', '#5B5B5B', '#3F5E3A', 0], sara: ['#EBC2A0', '#B07A35', '#8F3F3F', 1], chiara: ['#B97A55', '#2B1D16', '#9C5B2E', 1],
+  ada: ['#E9C9AE', '#6B4E9B', '#2F45C9', 1], vera: ['#D8B49A', '#1F3A5F', '#16181D', 1], elio: ['#E2B58F', '#7A4A2B', '#0F766E', 0],
+  nora: ['#F0CFB4', '#A0522D', '#0F766E', 1], teo: ['#C99573', '#2E2E2E', '#0F766E', 0], ugo: ['#DDB08B', '#5C3D2E', '#0F766E', 0],
+  lia: ['#E7BE9C', '#3A2A4F', '#0F766E', 1], rex: ['#BF8763', '#1E1E1E', '#7A2E2E', 0], bruno: ['#D6A07A', '#4A3426', '#0F766E', 0],
+  ivo: ['#EAC4A4', '#6E6E6E', '#0F766E', 0], mia: ['#F2D2B6', '#C6893F', '#0F766E', 1], dario: ['#C48A64', '#3A2B22', '#0F766E', 0],
+  oli: ['#E0B691', '#2F4F4F', '#0F766E', 0], kai: ['#D3A07E', '#4B3B2F', '#0F766E', 0], sam: ['#E5BD9B', '#5A3E6B', '#0F766E', 1],
+  zoe: ['#EDC6A6', '#2C4A7A', '#0F766E', 1], leo: ['#C9926E', '#3D3D3D', '#0F766E', 0], anna: ['#E6BC98', '#4A2E1E', '#5B4A8A', 1]
+};
+var FACES = [['#F1C7A5', '#8A4B2A', '#0F766E', 1], ['#C68863', '#2E2E2E', '#2F45C9', 0], ['#E2B58F', '#B07A35', '#7A5C9E', 1], ['#B97A55', '#1F1A17', '#3F5E3A', 0], ['#EBC2A0', '#6B4E9B', '#8F3F3F', 1], ['#D6A07A', '#5B5B5B', '#16181D', 0]];
+var PERSONAS = {
+  marco: { name: 'Marco R.', title: 'Direzione · sponsor', human: true }, laura: { name: 'Laura B.', title: 'Referente del cliente', human: true },
+  giulia: { name: 'Giulia F.', title: 'Project Manager', human: true }, paolo: { name: 'Paolo D.', title: 'Architetto software', human: true },
+  sara: { name: 'Sara M.', title: 'Operations', human: true }, chiara: { name: 'Chiara T.', title: 'Product Owner', human: true },
+  anna: { name: 'Anna V.', title: 'Business Analyst', human: true },
+  ada: { name: 'Ada', title: 'Avatar di coordinamento', agents: [['Coordinatore PM', 'claude-reasoning'], ['Pianificazione e controllo', 'claude-worker'], ['Reporting', 'claude-worker']] },
+  vera: { name: 'Vera', title: 'Avatar di verifica', agents: [['Gatekeeper', 'claude-reasoning']] },
+  elio: { name: 'Elio', title: 'Avatar analista', rovo: true, agents: [['Raccolta requisiti', 'claude-worker'], ['Specifica requisiti', 'claude-worker']] },
+  nora: { name: 'Nora', title: 'Avatar revisore', agents: [['Validatore', 'open-generalist']] },
+  teo: { name: 'Teo', title: 'Avatar tracciabilità', rovo: true, agents: [['Tracciabilità', 'open-generalist']] },
+  ugo: { name: 'Ugo', title: 'Avatar avvio progetti', agents: [['Business case', 'claude-worker'], ['Fattibilità', 'claude-reasoning'], ['Project charter', 'claude-worker']] },
+  lia: { name: 'Lia', title: 'Avatar progettista', agents: [['Architettura', 'claude-reasoning'], ['Design di dettaglio', 'open-generalist'], ['Modello dati', 'open-generalist']] },
+  rex: { name: 'Rex', title: 'Avatar sicurezza', agents: [['Threat modeling', 'claude-reasoning']] },
+  bruno: { name: 'Bruno', title: 'Avatar sviluppatore', agents: [['Sviluppatore (per componente)', 'claude-code-agent'], ['Unit test', 'open-coder']] },
+  ivo: { name: 'Ivo', title: 'Avatar revisore codice', agents: [['Revisore codice', 'open-generalist']] },
+  mia: { name: 'Mia', title: 'Avatar tester', agents: [['Test di integrazione', 'open-coder'], ['Test di sistema', 'open-coder'], ['Test non funzionali', 'open-coder'], ['Analisi difetti', 'open-generalist']] },
+  dario: { name: 'Dario', title: 'Avatar rilascio', agents: [['Piano di rilascio', 'claude-worker'], ['Deploy', 'open-light'], ['Documentazione', 'claude-worker']] },
+  oli: { name: 'Oli', title: 'Avatar esercizio', agents: [['Monitoraggio', 'open-light'], ['Incidenti', 'open-generalist'], ['Manutenzione', 'claude-code-agent']] },
+  kai: { name: 'Kai', title: 'Avatar chiusura', agents: [['Lessons learned', 'claude-worker'], ['Chiusura progetto', 'claude-worker']] },
+  sam: { name: 'Sam', title: 'Avatar facilitatore', agents: [['Facilitazione cerimonie', 'claude-worker'], ['Gestione impedimenti', 'claude-worker']] },
+  zoe: { name: 'Zoe', title: 'Avatar generalista', agents: [['Generalista', 'claude-worker']] },
+  leo: { name: 'Leo', title: 'Avatar generalista on-prem', agents: [['Generalista locale', 'open-generalist']] }
+};
+var ROLES = {
+  marco: 'Sponsor', laura: 'Cliente · utente chiave', giulia: 'Project Manager', paolo: 'Architetto', sara: 'Operations', chiara: 'Product Owner',
+  ada: 'Coordinatore PM', vera: 'Verifica dei gate', elio: 'Analisi requisiti', nora: 'Validazione requisiti', teo: 'Tracciabilità',
+  ugo: 'Avvio progetto', lia: 'Progettazione', rex: 'Security by design', bruno: 'Sviluppo', ivo: 'Code review', mia: 'Test',
+  dario: 'Rilascio', oli: 'Esercizio', kai: 'Chiusura', sam: 'Scrum Master'
+};
+var TASKS = {
+  's-refine': [['Raffinamento delle user story', '0 10 * * 2,4'], ['Scrittura criteri di accettazione', '0 15 * * 1-5']],
+  's-ready': [['Verifica Definition of Ready', '0 9 * * 1-5'], ['Controllo stime e dipendenze', '0 16 * * 3']],
+  's-sm': [['Preparazione daily', '45 8 * * 1-5'], ['Raccolta impedimenti', '0 13 * * 1-5'], ['Preparazione retrospettiva', '0 14 * * 5']],
+  's-dev': [['Sviluppo elementi dello sprint backlog', '0 9 * * 1-5'], ['Aggiornamento sprint backlog', '0 18 * * 1-5']],
+  's-review': [['Review delle pull request', '0 */2 * * 1-5']],
+  's-test': [['Test di regressione', '0 7 * * 1-5'], ['Test delle storie completate', '0 */3 * * 1-5']],
+  's-done': [['Verifica Definition of Done', '0 17 * * 1-5'], ['Evidenze per la sprint review', '0 12 * * 5']],
+  's-metrics': [['Aggiornamento burndown', '0 19 * * 1-5'], ['Calcolo velocity', '0 9 * * 1']],
+  's-release': [['Verifica rilasciabilità incremento', '0 10 * * 5'], ['Release notes', '0 16 * * 5']],
+  's-coord': [['Lettura decisioni del Product Owner', '*/30 8-19 * * 1-5'], ['Report di fine sprint', '0 18 * * 5']],
+  elio: [['Raccolta requisiti dalle fonti', '0 9 * * 1-5'], ['Aggiornamento SRS', '0 14 * * 1-5'], ['Sintesi incontri con il cliente', '0 18 * * 1-5']],
+  nora: [['Verifica validità requisiti', '0 10 * * 1-5'], ['Controllo ambiguità e conflitti', '0 15 * * 1-5'], ['Verifica testabilità dei requisiti', '0 11 * * 3']],
+  teo: [['Aggiornamento matrice di tracciabilità', '0 */4 * * 1-5'], ['Segnalazione requisiti senza copertura', '30 17 * * 5']],
+  vera: [['Verifica criteri di gate', '0 8 * * 1-5'], ['Preparazione pacchetto evidenze', '0 16 * * 5']],
+  ada: [['Lettura decisioni di gate', '*/30 8-19 * * 1-5'], ['Avanzamento rispetto al piano', '0 9 * * 1'], ['Report settimanale agli stakeholder', '0 17 * * 5']],
+  sam: [['Preparazione daily', '45 8 * * 1-5'], ['Raccolta impedimenti', '0 13 * * 1-5']],
+  ugo: [['Analisi costi-benefici', '0 10 * * 1-5'], ['Valutazione di fattibilità', '0 11 * * 2,4'], ['Redazione Project Charter', '0 16 * * 5']],
+  lia: [['Aggiornamento architettura', '0 10 * * 1-5'], ['Design di dettaglio dei componenti', '0 14 * * 1-5']],
+  rex: [['Threat modeling', '0 11 * * 2']],
+  bruno: [['Sviluppo task assegnati', '0 9 * * 1-5'], ['Esecuzione unit test', '0 13 * * 1-5']],
+  ivo: [['Review delle modifiche', '0 */2 * * 1-5']],
+  mia: [['Test di integrazione', '0 7 * * 1-5'], ['Test di sistema', '0 20 * * 1-5'], ['Triage difetti', '0 9 * * 1-5']],
+  dario: [['Verifica piano di rilascio', '0 10 * * 1-5'], ['Aggiornamento release notes', '0 17 * * 5']],
+  oli: [['Controllo salute del sistema', '*/15 * * * *'], ['Analisi incidenti aperti', '0 9 * * 1-5']],
+  kai: [['Raccolta lessons learned', '0 16 * * 5'], ['Bozza report di chiusura', '0 10 * * 1']]
+};
+var DEFAULT_TASKS = [['Esecuzione compiti del ruolo', '0 10 * * 1-5'], ['Rapporto al Coordinatore PM', '0 17 * * 1-5']];
+var HUMAN_TASKS = {
+  's-po': ['Approvazione Definition of Ready', 'Conferma dello Sprint Goal', 'Accettazione incremento'],
+  's-techlead': ['Approvazione piano di sprint', 'Approvazione Definition of Done'], 's-ops': ['Go per il rilascio'],
+  's-stake': ['Partecipazione alla sprint review'], 's-client': ['Feedback sull\'incremento'],
+  laura: ['Approvazione gate «Sign-off requisiti»', 'Conferma requisiti con il team'], giulia: ['Revisione report settimanale', 'Approvazione change request'],
+  marco: ['Approvazione gate di fase', 'Approvazione variazioni di budget'], paolo: ['Approvazione design review', 'Consulenza su vincoli tecnici'],
+  sara: ['Go per deploy in produzione', 'Fine hypercare'], chiara: ['Priorità del product backlog', 'Accettazione incremento']
+};
+var W_PHASES = [
+  ['avvio', 'Avvio', ['ugo', 'giulia', 'vera'], ['marco'], ['laura', 'paolo'], ['ada']],
+  ['pianificazione', 'Pianificazione', ['ada', 'giulia', 'vera'], ['marco'], ['paolo', 'sara'], ['laura']],
+  ['requisiti', 'Requisiti', ['elio', 'nora', 'teo', 'vera'], ['giulia'], ['laura', 'paolo'], ['marco', 'ada']],
+  ['progettazione', 'Progettazione', ['lia', 'rex', 'vera'], ['paolo'], ['sara', 'teo'], ['giulia']],
+  ['implementazione', 'Implementazione', ['bruno', 'ivo', 'vera'], ['paolo'], ['lia'], ['giulia', 'mia']],
+  ['test', 'Test', ['mia', 'vera'], ['giulia'], ['bruno', 'laura'], ['marco']],
+  ['rilascio', 'Rilascio', ['dario', 'vera'], ['giulia'], ['paolo', 'sara'], ['laura', 'marco']],
+  ['esercizio', 'Esercizio', ['oli'], ['sara'], ['paolo'], ['giulia']],
+  ['chiusura', 'Chiusura', ['kai', 'vera'], ['marco'], ['giulia'], ['laura']]
+];
+var ROLE_DEF = {
+  's-po': ['Product Owner', 'chiara'], 's-techlead': ['Tech lead', 'paolo'], 's-ops': ['Operations', 'sara'],
+  's-stake': ['Stakeholder', 'marco'], 's-client': ['Cliente · utente chiave', 'laura'],
+  's-coord': ['Coordinatore agile', 'ada'], 's-sm': ['Scrum Master', 'sam'], 's-refine': ['Raffinamento backlog', 'elio'],
+  's-ready': ['Verifica Definition of Ready', 'nora'], 's-dev': ['Developers', 'bruno'], 's-review': ['Code review', 'ivo'],
+  's-test': ['Test e integrazione', 'mia'], 's-done': ['Verifica Definition of Done', 'vera'], 's-metrics': ['Metriche e burndown', 'teo'],
+  's-release': ['Rilascio incremento', 'dario']
+};
+var A_PHASES = [
+  ['backlog', 'Product backlog', ['s-refine', 's-ready'], ['s-po'], ['s-client', 's-stake', 's-techlead'], ['s-coord']],
+  ['planning', 'Sprint planning', ['s-dev', 's-sm'], ['s-po'], ['s-techlead'], ['s-stake', 's-coord']],
+  ['sprint', 'Sprint in corso', ['s-dev', 's-review', 's-test', 's-sm', 's-metrics'], ['s-techlead'], ['s-po'], ['s-coord', 's-stake']],
+  ['review', 'Sprint review', ['s-dev', 's-done', 's-sm'], ['s-po'], ['s-client', 's-stake'], ['s-coord']],
+  ['retro', 'Retrospettiva', ['s-sm', 's-dev'], ['s-techlead'], ['s-po'], ['s-coord']],
+  ['release', 'Rilascio incremento', ['s-release', 's-done'], ['s-ops'], ['s-techlead'], ['s-po', 's-client']]
+];
+function roleName(rid) { return ROLE_DEF[rid] ? ROLE_DEF[rid][0] : ROLES[rid]; }
+var PROJECTS = [
+  { id: 'p1', name: 'Portale prenotazioni', model: 'w' },
+  { id: 'p2', name: 'App fidelity', model: 'a' },
+  { id: 'p3', name: 'Gestionale magazzino', model: 'w' }
+];
+var PRESETS = [
+  ['claude-reasoning', 'Claude ragionamento', 'claude-opus', 'oss-generalist', 'LangGraph'],
+  ['claude-worker', 'Claude redazione e analisi', 'claude-sonnet', 'oss-generalist', 'LangGraph'],
+  ['claude-code-agent', 'Claude coding agent', 'claude-sonnet', '—', 'Claude Agent SDK'],
+  ['open-generalist', 'Generalista open', 'oss-generalist', 'oss-generalist-cloud', 'LangGraph'],
+  ['open-coder', 'Coder open', 'oss-coder', 'oss-coder-small', 'LangGraph'],
+  ['open-light', 'Agente leggero open', 'oss-light', '—', 'LangGraph']
+];
+var MODELS = [
+  ['claude-opus', 'Anthropic API', 'cloud', 'Claude Opus', 'commerciale'],
+  ['claude-sonnet', 'Anthropic API', 'cloud', 'Claude Sonnet', 'commerciale'],
+  ['oss-generalist', 'vLLM on-prem', 'self-hosted', 'gpt-oss-120b', 'Apache 2.0'],
+  ['oss-coder', 'vLLM on-prem', 'self-hosted', 'Qwen3-Coder-Next 80B-A3B', 'Apache 2.0'],
+  ['oss-light', 'Ollama workstation', 'self-hosted', 'GLM-4.7-Flash', 'MIT'],
+  ['oss-coder-small', 'Ollama workstation', 'self-hosted', 'Devstral Small 2', 'Apache 2.0'],
+  ['oss-generalist-cloud', 'Cloud OpenAI-compatible', 'cloud', 'gpt-oss-120b', 'Apache 2.0']
+];
+var CONNECTORS = [
+  ['jira', 'Jira Cloud', 'work tracking', 'https://mcp.atlassian.com/v2/mcp', 'disponibile', true],
+  ['clickup', 'ClickUp', 'work tracking', 'https://mcp.clickup.com/mcp', 'disponibile', true],
+  ['plane', 'Plane self-hosted', 'work tracking', 'https://plane.internal/api/v1', 'API REST', true],
+  ['confluence', 'Confluence Cloud', 'knowledge base', 'https://mcp.atlassian.com/v2/mcp', 'disponibile', false, 'Knowledge base'],
+  ['drive', 'Google Drive', 'archivio file', 'https://drivemcp.googleapis.com/mcp/v1', 'anteprima', false, 'Archivio file'],
+  ['github', 'GitHub', 'codice', 'endpoint da configurare', 'da configurare', false, 'Repository']
+];
+var TABS = [['roles', 'Ruoli'], ['people', 'Persone e avatar'], ['presets', 'Preset di agenti'], ['models', 'Modelli e provider'], ['conn', 'Connettori']];
+var DAYS = { '1': 'lunedì', '2': 'martedì', '3': 'mercoledì', '4': 'giovedì', '5': 'venerdì', '6': 'sabato', '0': 'domenica' };
+
+function pad(n) { return (n.length < 2 ? '0' : '') + n; }
+function describeCron(c) {
+  var f = (c || '').trim().split(/\s+/);
+  if (f.length !== 5) return null;
+  var m = f[0], h = f[1], dw = f[4];
+  if (!f.every(function (x) { return /^[\d*\/,-]+$/.test(x); })) return null;
+  if (f[2] !== '*' || f[3] !== '*') return 'pianificazione personalizzata';
+  var list = /^\d(,\d)+$/.test(dw) ? dw.split(',').map(function (d) { return DAYS[d]; }) : null;
+  var days = dw === '1-5' ? 'feriali' : (dw === '*' ? 'tutti i giorni' : (list && list.every(Boolean) ? list.slice(0, -1).join(', ') + ' e ' + list[list.length - 1] : (DAYS[dw] || null)));
+  if (!days) return 'pianificazione personalizzata';
+  if (/^\d+$/.test(m) && /^\d+$/.test(h)) return days + ' alle ' + pad(h) + ':' + pad(m);
+  if (/^\*\/\d+$/.test(m) && h === '*') return 'ogni ' + m.slice(2) + ' minuti, ' + days;
+  if (/^\*\/\d+$/.test(m) && /^\d+-\d+$/.test(h)) return 'ogni ' + m.slice(2) + ' minuti, ore ' + h.replace('-', '–') + ', ' + days;
+  if (m === '0' && /^\*\/\d+$/.test(h)) return 'ogni ' + h.slice(2) + ' ore, ' + days;
+  return 'pianificazione personalizzata';
+}
+
+var CONN_OPTS = [['jira', 'Jira'], ['confluence', 'Confluence'], ['clickup', 'ClickUp'], ['drive', 'Google Drive'], ['github', 'GitHub']];
+var AUTOS = [
+  ['advisory', 'Solo proposte', 'Produce proposte e bozze, non esegue azioni sui sistemi esterni.'],
+  ['supervised', 'Con revisione', 'Agisce, ma il risultato passa da una revisione prima di essere applicato.'],
+  ['autonomous', 'Autonomo', 'Agisce da solo entro i connettori ammessi e il limite di iterazioni.']
+];
+
+class Component extends DCLogic {
+  newAgent(n, preset) {
+    return { n: n, preset: preset, autonomy: 'supervised', conns: ['jira', 'confluence'], maxIt: 25,
+      instr: 'Agisci come «' + n + '» per il ruolo a cui è assegnato l\'avatar. Esegui solo i compiti standard del ruolo, cita le fonti usate e restituisci il risultato nel formato richiesto dal compito.' };
+  }
+  agentsOf(pid) {
+    var s = this.state || {};
+    if (s.agentList && s.agentList[pid]) return s.agentList[pid];
+    var self = this, p = this.persona(pid);
+    return (p.agents || []).map(function (a) { return self.newAgent(a[0], a[1]); });
+  }
+  setAgents(pid, list) { this.put('agentList', pid, list); }
+  get(key, map, def) { var s = this.state || {}; return s[map] && s[map][key] !== undefined ? s[map][key] : def; }
+  put(map, key, val, extra) { var s = this.state || {}; var o = Object.assign({}, s[map] || {}); o[key] = val; var u = Object.assign({ msg: null }, extra || {}); u[map] = o; this.setState(u); }
+  persona(id) {
+    var s = this.state || {};
+    var ex = (s.extra || []).find(function (e) { return e.id === id; });
+    return ex || PERSONAS[id];
+  }
+  look(id) {
+    var p = this.persona(id), human = !!p.human;
+    var fi = this.get(id, 'face', null);
+    var lk = fi !== null ? FACES[fi] : (LOOK[id] || FACES[0]);
+    return {
+      id: id, name: this.get(id, 'names', p.name), title: p.title, isHuman: human, isAvatar: !human,
+      skin: lk[0], hair: lk[1], shirt: lk[2],
+      sides: lk[3] ? 'M12.5 19 Q11 31 15 34 L16 21 Z M31.5 19 Q33 31 29 34 L28 21 Z' : 'M22 9 Z',
+      bg: human ? '#EEF0FB' : '#E3F4EF', ring: human ? '#2A3AA8' : '#0B6B53', dash: human ? 'none' : '3 2.5',
+      typeLabel: human ? 'Umano' : 'Avatar',
+      tagStyle: 'display: inline-block; width: fit-content; font-size: 11px; padding: 1px 7px; border-radius: 999px; font-weight: 600; ' + (human ? 'background: #EEF0FB; color: #2A3AA8' : 'background: #E3F4EF; color: #0B5E4A')
+    };
+  }
+  renderVals() {
+    var self = this, s = this.state || {};
+    var proj = PROJECTS.find(function (p) { return p.id === (s.proj || 'p1'); });
+    var defs = proj.model === 'w' ? W_PHASES : A_PHASES;
+    var roleIds = [];
+    defs.forEach(function (d) { [d[2], d[3], d[4], d[5]].forEach(function (g) { g.forEach(function (id) { if (roleIds.indexOf(id) < 0) roleIds.push(id); }); }); });
+    var personaIds = Object.keys(PERSONAS).concat((s.extra || []).map(function (e) { return e.id; }));
+    var tab = s.tab || 'roles';
+    var selRole = roleIds.indexOf(s.role) >= 0 ? s.role : roleIds[0];
+    var selPersona = personaIds.indexOf(s.persona) >= 0 ? s.persona : 'elio';
+    var assigned = function (rid) { return self.get(rid, 'assign', ROLE_DEF[rid] ? ROLE_DEF[rid][1] : rid); };
+
+    function roleInfo(rid) {
+      var aPh = defs.filter(function (d) { return d[3].indexOf(rid) >= 0; }).map(function (d) { return d[1]; });
+      var where = defs.map(function (d) {
+        var L = d[2].indexOf(rid) >= 0 ? 'R' : d[3].indexOf(rid) >= 0 ? 'A' : d[4].indexOf(rid) >= 0 ? 'C' : d[5].indexOf(rid) >= 0 ? 'I' : '';
+        return L ? d[1] + ' ' + L : '';
+      }).filter(Boolean).join(' · ');
+      return { aPh: aPh, isA: aPh.length > 0, where: where };
+    }
+    function usageOf(pid) {
+      var used = roleIds.filter(function (rid) { return assigned(rid) === pid; }).map(function (rid) { return roleName(rid); });
+      return used.length ? 'in: ' + used.join(', ') : 'non assegnato';
+    }
+
+    var cronErrors = 0;
+    roleIds.forEach(function (rid) {
+      if (self.persona(assigned(rid)).human) return;
+      (TASKS[rid] || DEFAULT_TASKS).forEach(function (t, i) {
+        var k = rid + '|' + i;
+        if (self.get(k, 'on', true) && !describeCron(self.get(k, 'cron', t[1]))) cronErrors++;
+      });
+    });
+
+    roleIds.forEach(function (rid) {
+      var pid = assigned(rid);
+      if (!self.persona(pid).human && self.agentsOf(pid).length === 0) cronErrors++;
+    });
+
+    var humans = personaIds.filter(function (id) { return self.persona(id).human; });
+    var avatars = personaIds.filter(function (id) { return !self.persona(id).human; });
+
+    var roles = roleIds.map(function (rid) {
+      var ri = roleInfo(rid), pid = assigned(rid), on = rid === selRole;
+      return {
+        roleName: roleName(rid), where: ri.where, p: self.look(pid), personaId: pid, selId: 'assign-' + rid,
+        pressed: on ? 'true' : 'false',
+        style: 'display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 12px; border-radius: 10px; background: #FFFFFF; border: ' + (on ? '2px solid ' + AC : '1px solid #DEDCD3'),
+        humanOpts: humans.map(function (h) { return { id: h, label: self.get(h, 'names', self.persona(h).name) + ' · ' + self.persona(h).title }; }),
+        avatarGroup: ri.isA ? 'Avatar (non ammessi: il ruolo approva)' : 'Avatar',
+        avatarOpts: avatars.map(function (a) { return { id: a, label: self.get(a, 'names', self.persona(a).name) + ' · ' + self.persona(a).title, disabled: ri.isA }; }),
+        pick: function () { self.setState({ role: rid, msg: null }); },
+        onAssign: function (e) { self.put('assign', rid, e.target.value, { role: rid }); }
+      };
+    });
+
+    var rri = roleInfo(selRole), rpid = assigned(selRole), rp = this.look(rpid);
+    var rd = {
+      roleName: roleName(selRole), where: rri.where, isA: rri.isA, aPhases: rri.aPh.join(', '), p: rp,
+      isAvatar: rp.isAvatar, isHuman: rp.isHuman,
+      editPersona: function () { self.setState({ tab: 'people', persona: rpid, msg: null }); },
+      humanTasks: (HUMAN_TASKS[selRole] || ['Decisioni del ruolo']).map(function (n) { return { n: n }; }),
+      tasks: (TASKS[selRole] || DEFAULT_TASKS).map(function (t, i) {
+        var k = selRole + '|' + i, c = self.get(k, 'cron', t[1]), onT = self.get(k, 'on', true), d = describeCron(c);
+        return {
+          name: t[0], chkId: 'task-' + selRole + '-' + i, cronId: 'cron-' + selRole + '-' + i, cron: c, on: onT,
+          preview: !onT ? 'disattivato' : (d || 'espressione cron non valida'),
+          previewStyle: !onT ? 'color: #5A5F6A' : (d ? 'color: #0B5E4A' : 'color: #8A1F1F; font-weight: 600'),
+          cronBorder: onT && !d ? '#B33A3A' : '#C9C7BE',
+          onToggle: function () { self.put('on', k, !onT); },
+          onCron: function (e) { self.put('cron', k, e.target.value); }
+        };
+      })
+    };
+
+    var catalog = personaIds.map(function (id) {
+      var lk = self.look(id), on = id === selPersona;
+      return Object.assign(lk, {
+        usage: usageOf(id), pressed: on ? 'true' : 'false',
+        style: 'display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 10px; background: #FFFFFF; color: #16181D; cursor: pointer; min-height: 64px; border: ' + (on ? '2px solid ' + AC : '1px solid #DEDCD3'),
+        pick: function () { self.setState({ persona: id, msg: null }); }
+      });
+    });
+
+    var pp = this.persona(selPersona), pe = this.look(selPersona);
+    var peAgents = pp.human ? [] : this.agentsOf(selPersona);
+    var openIdx = this.get(selPersona, 'agentOpen', 0);
+    var curFace = this.get(selPersona, 'face', null);
+    Object.assign(pe, {
+      usage: usageOf(selPersona),
+      onName: function (e) { self.put('names', selPersona, e.target.value); },
+      email: this.get(selPersona, 'email', ''), onEmail: function (e) { self.put('email', selPersona, e.target.value); },
+      faces: FACES.map(function (f, i) {
+        var on = curFace === i;
+        return { skin: f[0], hair: f[1], shirt: f[2], sides: f[3] ? 'M12.5 19 Q11 31 15 34 L16 21 Z M31.5 19 Q33 31 29 34 L28 21 Z' : 'M22 9 Z',
+          label: 'Volto ' + (i + 1), pressed: on ? 'true' : 'false',
+          style: 'padding: 3px; border-radius: 50%; background: #FFFFFF; cursor: pointer; width: 46px; height: 46px; border: ' + (on ? '2px solid ' + AC : '1px solid #DEDCD3'),
+          pick: function () { self.put('face', selPersona, i); } };
+      }),
+      agents: peAgents.map(function (a, i) {
+        var open = openIdx === i, pr = PRESETS.find(function (p) { return p[0] === a.preset; }) || PRESETS[1];
+        var au = AUTOS.find(function (x) { return x[0] === a.autonomy; }) || AUTOS[1];
+        var upd = function (patch) { self.setAgents(selPersona, peAgents.map(function (b, j) { return j === i ? Object.assign({}, b, patch) : b; })); };
+        var pfx = selPersona + '-' + i;
+        return {
+          n: a.n, preset: a.preset, instr: a.instr, maxIt: a.maxIt, open: open, openStr: open ? 'true' : 'false',
+          toggleLabel: open ? 'Chiudi' : 'Configura',
+          summary: pr[1] + ' · ' + au[1] + ' · ' + a.conns.length + ' connettori',
+          modelInfo: 'Modello ' + pr[2] + ' · fallback ' + pr[3] + ' · runtime ' + pr[4],
+          nameId: 'ag-name-' + pfx, selId: 'ag-preset-' + pfx, instrId: 'ag-instr-' + pfx, iterId: 'ag-iter-' + pfx,
+          toggle: function () { self.put('agentOpen', selPersona, open ? -1 : i); },
+          onName: function (e) { upd({ n: e.target.value }); },
+          onPreset: function (e) { upd({ preset: e.target.value }); },
+          onInstr: function (e) { upd({ instr: e.target.value }); },
+          onIter: function (e) { upd({ maxIt: e.target.value }); },
+          autoHint: au[2],
+          autos: AUTOS.map(function (x) {
+            var on = x[0] === a.autonomy;
+            return { label: x[1], pressed: on ? 'true' : 'false', pick: function () { upd({ autonomy: x[0] }); },
+              style: 'min-height: 36px; padding: 4px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; ' + (on ? 'background: #16181D; color: #FFFFFF; border: 1px solid #16181D; font-weight: 600' : 'background: #FFFFFF; color: #3A3E47; border: 1px solid #C9C7BE') };
+          }),
+          conns: CONN_OPTS.map(function (c) {
+            var on = a.conns.indexOf(c[0]) >= 0;
+            return { id: 'ag-conn-' + pfx + '-' + c[0], label: c[1], on: on,
+              toggle: function () { upd({ conns: on ? a.conns.filter(function (x) { return x !== c[0]; }) : a.conns.concat([c[0]]) }); } };
+          }),
+          remove: function () { self.setAgents(selPersona, peAgents.filter(function (b, j) { return j !== i; })); self.put('agentOpen', selPersona, -1); }
+        };
+      }),
+      noAgents: !pp.human && peAgents.length === 0,
+      addAgent: function () {
+        self.setAgents(selPersona, peAgents.concat([self.newAgent('Nuovo agente', 'claude-worker')]));
+        self.put('agentOpen', selPersona, peAgents.length);
+      },
+      rovo: this.get(selPersona, 'rovo', !!pp.rovo), onRovo: function () { self.put('rovo', selPersona, !self.get(selPersona, 'rovo', !!pp.rovo)); }
+    });
+
+    var addPersona = function (human) {
+      var ex = (self.state && self.state.extra) || [];
+      var id = 'new-' + (ex.length + 1);
+      var item = human ? { id: id, name: '[NOME PERSONA]', title: 'Persona umana', human: true } : { id: id, name: 'Nuovo avatar', title: 'Avatar personalizzato', agents: [['Agente principale', 'claude-worker']] };
+      var faces = Object.assign({}, (self.state && self.state.face) || {}); faces[id] = ex.length % FACES.length;
+      self.setState({ extra: ex.concat([item]), face: faces, persona: id, msg: null });
+    };
+
+    var usage = {};
+    roleIds.forEach(function (rid) {
+      var pid = assigned(rid), p = self.persona(pid);
+      if (!p.human) self.agentsOf(pid).forEach(function (a) { usage[a.preset] = (usage[a.preset] || 0) + 1; });
+    });
+
+    var tracker = s.tracker || 'jira';
+    return {
+      projects: PROJECTS.map(function (p) { return { id: p.id, label: p.name + ' · ' + (p.model === 'w' ? 'Waterfall' : 'Agile · Scrum') }; }),
+      projId: proj.id, modelLabel: proj.model === 'w' ? 'Waterfall' : 'Agile · Scrum', roleCount: roleIds.length, personaCount: personaIds.length,
+      onProject: function (e) { self.setState({ proj: e.target.value, role: null, msg: null }); },
+      checkLabel: cronErrors ? cronErrors + ' da correggere' : 'Configurazione valida',
+      checkStyle: 'font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; ' + (cronErrors ? 'background: #FBECEC; color: #8A1F1F' : 'background: #E3F4EF; color: #0B5E4A'),
+      save: function () { self.setState({ msg: cronErrors ? 'Salvataggio bloccato: correggi ' + cronErrors + (cronErrors === 1 ? ' problema' : ' problemi') + ' prima di salvare.' : 'Configurazione salvata (simulazione). Le nuove assegnazioni valgono dalla prossima esecuzione pianificata.', msgOk: !cronErrors }); },
+      hasMsg: !!s.msg, msg: s.msg || '', msgStyle: s.msgOk ? 'background: #E3F4EF; color: #0B5E4A' : 'background: #FBECEC; color: #8A1F1F',
+      tabs: TABS.map(function (t) {
+        var on = t[0] === tab;
+        return { label: t[1], selected: on ? 'true' : 'false', pick: function () { self.setState({ tab: t[0], msg: null }); },
+          style: 'min-height: 44px; padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; ' + (on ? 'background: #16181D; color: #FFFFFF; border: 1px solid #16181D; font-weight: 600' : 'background: #FFFFFF; color: #3A3E47; border: 1px solid #C9C7BE') };
+      }),
+      tabRoles: tab === 'roles', tabPeople: tab === 'people', tabPresets: tab === 'presets', tabModels: tab === 'models', tabConn: tab === 'conn',
+      roles: roles, rd: rd, catalog: catalog, pe: pe,
+      addHuman: function () { addPersona(true); }, addAvatar: function () { addPersona(false); },
+      presets: PRESETS.map(function (p) { return { id: p[0], label: p[1] }; }),
+      presetCards: PRESETS.map(function (p) { return { id: p[0], label: p[1], model: p[2], fallback: p[3], runtime: p[4], uses: (usage[p[0]] || 0) + ' agenti nel progetto' }; }),
+      models: MODELS.map(function (m) { return { alias: m[0], provider: m[1], deploy: m[2], upstream: m[3], license: m[4] }; }),
+      connectors: CONNECTORS.map(function (c) {
+        var prim = c[0] === tracker;
+        var st = c[4] === 'disponibile' ? ['#E3F4EF', '#0B5E4A'] : (c[4] === 'anteprima' ? ['#FDF1DC', '#7A4A00'] : ['#ECEAE2', '#3A3E47']);
+        return {
+          name: c[1], category: c[2], endpoint: c[3], status: c[4], isTracker: c[5], isFixed: !c[5], binding: c[6] || '',
+          statusStyle: 'font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: ' + st[0] + '; color: ' + st[1],
+          primaryStr: prim ? 'true' : 'false', btnLabel: prim ? 'Work tracker principale' : 'Usa come principale',
+          btnStyle: 'min-height: 40px; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; ' + (prim ? 'background: #2F45C9; color: #FFFFFF; border: 1px solid #2F45C9; font-weight: 600' : 'background: #FFFFFF; color: #2F45C9; border: 1px solid #2F45C9'),
+          pick: function () { self.setState({ tracker: c[0], msg: null }); }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

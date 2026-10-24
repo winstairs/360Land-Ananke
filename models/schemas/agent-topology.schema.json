@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ananke:agent-topology:1.1",
+  "title": "AgentTopology",
+  "description": "Topologia multi-agente che esegue un ProcessModel: un supervisore (PM Office agentico) governa un orchestratore per ogni stadio, che a sua volta coordina agenti specialisti. Gli approvatori umani dei gate restano quelli definiti nel ProcessModel.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "processModel",
+    "supervisor",
+    "orchestrators"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "processModel": {
+      "$ref": "#/$defs/id",
+      "description": "id del ProcessModel eseguito da questa topologia"
+    },
+    "supervisor": {
+      "$ref": "#/$defs/supervisor"
+    },
+    "orchestratorDefaults": {
+      "type": "object",
+      "description": "Responsabilità comuni a tutti gli orchestratori di stadio",
+      "additionalProperties": false,
+      "properties": {
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "orchestrators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/orchestrator"
+      }
+    },
+    "humanCheckpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/humanCheckpoint"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "idList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "agent": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "responsibilities",
+        "supportsRole",
+        "autonomy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "responsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "activities": {
+          "$ref": "#/$defs/idList",
+          "description": "Attività del ProcessModel eseguite dall'agente"
+        },
+        "consumes": {
+          "$ref": "#/$defs/idList",
+          "description": "Artefatti in ingresso"
+        },
+        "produces": {
+          "$ref": "#/$defs/idList",
+          "description": "Artefatti prodotti"
+        },
+        "supportsRole": {
+          "$ref": "#/$defs/id",
+          "description": "Ruolo umano del ProcessModel che l'agente supporta; l'Accountable resta umano"
+        },
+        "autonomy": {
+          "enum": [
+            "advisory",
+            "supervised",
+            "autonomous"
+          ],
+          "description": "advisory: solo proposte; supervised: agisce, l'output richiede revisione umana o di un agente revisore; autonomous: agisce entro i propri guardrail"
+        },
+        "reviewedBy": {
+          "$ref": "#/$defs/id",
+          "description": "Agente che revisiona l'output (mai sé stesso)"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Capacità/strumenti richiesti"
+        },
+        "scalable": {
+          "type": "boolean",
+          "default": false,
+          "description": "true se può essere istanziato in parallelo (es. per componente)"
+        },
+        "crossCutting": {
+          "$ref": "#/$defs/id",
+          "description": "Processo trasversale del ProcessModel di cui l'agente è responsabile"
+        },
+        "scheduledTasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scheduledTask"
+          }
+        }
+      }
+    },
+    "supervisor": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "lead",
+        "agents"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lead": {
+          "$ref": "#/$defs/id",
+          "description": "Agente coordinatore del supervisore"
+        },
+        "agents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/agent"
+          }
+        }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "stage",
+        "agents",
+        "escalatesTo",
+        "gateReviewer"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/id",
+          "description": "Stadio del ProcessModel orchestrato"
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Responsabilità aggiuntive rispetto a orchestratorDefaults"
+        },
+        "agents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/agent"
+          }
+        },
+        "escalatesTo": {
+          "$ref": "#/$defs/id",
+          "description": "Agente del supervisore a cui scalare"
+        },
+        "gateReviewer": {
+          "$ref": "#/$defs/id",
+          "description": "Agente che verifica in modo indipendente i criteri del gate"
+        }
+      }
+    },
+    "humanCheckpoint": {
+      "type": "object",
+      "required": [
+        "id",
+        "description",
+        "roles",
+        "appliesTo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "type": "string"
+        },
+        "roles": {
+          "$ref": "#/$defs/idList",
+          "minItems": 1
+        },
+        "appliesTo": {
+          "oneOf": [
+            {
+              "const": "all"
+            },
+            {
+              "$ref": "#/$defs/idList",
+              "minItems": 1
+            }
+          ]
+        }
+      }
+    },
+    "scheduledTask": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "cron"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome standard del compito, mostrato in console"
+        },
+        "cron": {
+          "type": "string",
+          "description": "Espressione cron a 5 campi (minuto ora giorno mese giorno-settimana)"
+        },
+        "activity": {
+          "$ref": "#/$defs/id",
+          "description": "Attività del ProcessModel a cui contribuisce"
+        },
+        "action": {
+          "enum": [
+            "agent",
+            "apply-gate-decisions",
+            "check-timebox"
+          ],
+          "default": "agent",
+          "description": "agent: esecuzione LLM; apply-gate-decisions: applica le decisioni umane ai gate; check-timebox: chiude gli stadi a timebox scaduto"
+        }
+      }
+    }
+  }
+}

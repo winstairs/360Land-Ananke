@@ -1,0 +1,684 @@
+{
+  "id": "scrum-e2e",
+  "name": "Pipeline Scrum end-to-end",
+  "methodology": "scrum",
+  "version": "1.1.0",
+  "description": "Ciclo iterativo a sprint: product backlog, sprint planning, sprint con daily scrum, sprint review, retrospettiva e rilascio dell'incremento. Gli stadi da planning a retrospettiva si ripetono a ogni sprint.",
+  "roles": [
+    {
+      "id": "sponsor",
+      "name": "Stakeholder / Sponsor",
+      "description": "Finanzia il prodotto e partecipa alla sprint review"
+    },
+    {
+      "id": "client",
+      "name": "Cliente / Utente chiave",
+      "description": "Dà feedback sull'incremento"
+    },
+    {
+      "id": "product-owner",
+      "name": "Product Owner",
+      "description": "Massimizza il valore del prodotto, gestisce e ordina il product backlog"
+    },
+    {
+      "id": "scrum-master",
+      "name": "Scrum Master",
+      "description": "Facilita gli eventi Scrum e rimuove gli impedimenti"
+    },
+    {
+      "id": "developers",
+      "name": "Developers",
+      "description": "Realizzano l'incremento e ne garantiscono la qualità"
+    },
+    {
+      "id": "tech-lead",
+      "name": "Tech lead",
+      "description": "Referente tecnico del team, approva piano tecnico e Definition of Done"
+    },
+    {
+      "id": "ops",
+      "name": "Operations / DevOps",
+      "description": "Rilascia l'incremento in produzione"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "product-goal",
+      "name": "Product Goal",
+      "type": "document",
+      "owner": "product-owner"
+    },
+    {
+      "id": "product-backlog",
+      "name": "Product backlog",
+      "type": "backlog",
+      "owner": "product-owner"
+    },
+    {
+      "id": "definition-of-ready",
+      "name": "Definition of Ready",
+      "type": "document",
+      "owner": "product-owner"
+    },
+    {
+      "id": "definition-of-done",
+      "name": "Definition of Done",
+      "type": "document",
+      "owner": "developers"
+    },
+    {
+      "id": "sprint-goal",
+      "name": "Sprint Goal",
+      "type": "document",
+      "owner": "product-owner"
+    },
+    {
+      "id": "sprint-backlog",
+      "name": "Sprint backlog",
+      "type": "backlog",
+      "owner": "developers"
+    },
+    {
+      "id": "source-code",
+      "name": "Codice sorgente",
+      "type": "code",
+      "owner": "developers"
+    },
+    {
+      "id": "build",
+      "name": "Build versionata",
+      "type": "build",
+      "owner": "developers"
+    },
+    {
+      "id": "test-report",
+      "name": "Esito dei test",
+      "type": "report",
+      "owner": "developers"
+    },
+    {
+      "id": "increment",
+      "name": "Incremento",
+      "type": "build",
+      "owner": "developers",
+      "description": "Incremento conforme alla Definition of Done"
+    },
+    {
+      "id": "burndown",
+      "name": "Burndown e velocity",
+      "type": "report",
+      "owner": "scrum-master"
+    },
+    {
+      "id": "impediment-log",
+      "name": "Registro impedimenti",
+      "type": "log",
+      "owner": "scrum-master"
+    },
+    {
+      "id": "review-notes",
+      "name": "Esito della sprint review",
+      "type": "document",
+      "owner": "product-owner"
+    },
+    {
+      "id": "retro-actions",
+      "name": "Azioni di miglioramento",
+      "type": "document",
+      "owner": "scrum-master"
+    },
+    {
+      "id": "release-notes",
+      "name": "Release notes",
+      "type": "document",
+      "owner": "ops"
+    }
+  ],
+  "stages": [
+    {
+      "id": "product-backlog",
+      "name": "Product backlog",
+      "order": 0,
+      "kind": "event",
+      "iterative": true,
+      "description": "Attività continua: il backlog si raffina durante tutti gli sprint",
+      "inputs": [
+        "review-notes"
+      ],
+      "activities": [
+        {
+          "id": "product-goal-def",
+          "name": "Definizione del Product Goal",
+          "raci": {
+            "R": [
+              "product-owner"
+            ],
+            "A": "product-owner",
+            "C": [
+              "sponsor",
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "backlog-refinement",
+          "name": "Raffinamento delle user story",
+          "raci": {
+            "R": [
+              "product-owner",
+              "developers"
+            ],
+            "A": "product-owner",
+            "C": [
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "acceptance-criteria",
+          "name": "Criteri di accettazione, Definition of Ready e Definition of Done",
+          "raci": {
+            "R": [
+              "product-owner"
+            ],
+            "A": "product-owner",
+            "C": [
+              "developers",
+              "tech-lead"
+            ]
+          }
+        },
+        {
+          "id": "estimation",
+          "name": "Stima degli elementi",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead",
+            "I": [
+              "product-owner"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "product-goal",
+        "product-backlog",
+        "definition-of-ready",
+        "definition-of-done"
+      ],
+      "gate": {
+        "id": "g-ready",
+        "name": "Elementi pronti (Definition of Ready)",
+        "criteria": [
+          "Elementi in cima al backlog ordinati per valore",
+          "Ogni elemento ha criteri di accettazione verificabili",
+          "Stime e dipendenze note"
+        ],
+        "approvers": [
+          "product-owner"
+        ]
+      },
+      "continuous": true
+    },
+    {
+      "id": "sprint-planning",
+      "name": "Sprint planning",
+      "order": 1,
+      "kind": "ceremony",
+      "iterative": true,
+      "timebox": "PT4H",
+      "inputs": [
+        "product-backlog",
+        "definition-of-ready",
+        "definition-of-done"
+      ],
+      "activities": [
+        {
+          "id": "sprint-goal-def",
+          "name": "Definizione dello Sprint Goal",
+          "raci": {
+            "R": [
+              "product-owner",
+              "developers"
+            ],
+            "A": "product-owner",
+            "C": [
+              "scrum-master"
+            ]
+          }
+        },
+        {
+          "id": "item-selection",
+          "name": "Selezione degli elementi in base alla capacità",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead",
+            "C": [
+              "product-owner"
+            ]
+          }
+        },
+        {
+          "id": "work-plan",
+          "name": "Piano di lavoro dello sprint",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead",
+            "I": [
+              "scrum-master"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "sprint-goal",
+        "sprint-backlog"
+      ],
+      "gate": {
+        "id": "g-sprint-start",
+        "name": "Avvio dello sprint",
+        "criteria": [
+          "Sprint Goal concordato",
+          "Sprint backlog coerente con la capacità del team",
+          "Piano per i primi giorni definito"
+        ],
+        "approvers": [
+          "product-owner",
+          "tech-lead"
+        ]
+      }
+    },
+    {
+      "id": "sprint",
+      "name": "Sprint in corso",
+      "order": 2,
+      "kind": "event",
+      "iterative": true,
+      "timebox": "P2W",
+      "inputs": [
+        "sprint-goal",
+        "sprint-backlog",
+        "definition-of-done"
+      ],
+      "activities": [
+        {
+          "id": "development",
+          "name": "Sviluppo degli elementi",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead"
+          }
+        },
+        {
+          "id": "code-review",
+          "name": "Code review",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead"
+          }
+        },
+        {
+          "id": "continuous-testing",
+          "name": "Test e integrazione continui",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead",
+            "I": [
+              "product-owner"
+            ]
+          }
+        },
+        {
+          "id": "daily-scrum",
+          "name": "Daily scrum",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "tech-lead",
+            "I": [
+              "product-owner"
+            ]
+          }
+        },
+        {
+          "id": "impediment-removal",
+          "name": "Rimozione degli impedimenti",
+          "raci": {
+            "R": [
+              "scrum-master"
+            ],
+            "A": "tech-lead",
+            "C": [
+              "tech-lead"
+            ]
+          }
+        },
+        {
+          "id": "progress-tracking",
+          "name": "Burndown e avanzamento",
+          "raci": {
+            "R": [
+              "scrum-master"
+            ],
+            "A": "tech-lead",
+            "I": [
+              "product-owner",
+              "sponsor"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "source-code",
+        "build",
+        "test-report",
+        "increment",
+        "burndown",
+        "impediment-log"
+      ],
+      "gate": {
+        "id": "g-done",
+        "name": "Incremento conforme alla Definition of Done",
+        "criteria": [
+          "Ogni elemento completato rispetta la Definition of Done",
+          "Test automatici superati",
+          "Elementi non completati restituiti al product backlog"
+        ],
+        "approvers": [
+          "tech-lead"
+        ]
+      }
+    },
+    {
+      "id": "sprint-review",
+      "name": "Sprint review",
+      "order": 3,
+      "kind": "ceremony",
+      "iterative": true,
+      "timebox": "PT2H",
+      "inputs": [
+        "increment",
+        "sprint-goal",
+        "burndown"
+      ],
+      "activities": [
+        {
+          "id": "increment-demo",
+          "name": "Presentazione dell'incremento",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "product-owner",
+            "C": [
+              "client",
+              "sponsor"
+            ]
+          }
+        },
+        {
+          "id": "feedback-collection",
+          "name": "Raccolta del feedback",
+          "raci": {
+            "R": [
+              "product-owner"
+            ],
+            "A": "product-owner",
+            "C": [
+              "client",
+              "sponsor"
+            ]
+          }
+        },
+        {
+          "id": "backlog-update",
+          "name": "Aggiornamento del product backlog",
+          "raci": {
+            "R": [
+              "product-owner"
+            ],
+            "A": "product-owner",
+            "I": [
+              "developers"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "review-notes",
+        "product-backlog"
+      ],
+      "gate": {
+        "id": "g-accept",
+        "name": "Accettazione dell'incremento",
+        "criteria": [
+          "Incremento presentato agli stakeholder",
+          "Feedback registrato",
+          "Decisione di rilascio presa"
+        ],
+        "approvers": [
+          "product-owner"
+        ]
+      }
+    },
+    {
+      "id": "sprint-retrospective",
+      "name": "Retrospettiva",
+      "order": 4,
+      "kind": "ceremony",
+      "iterative": true,
+      "timebox": "PT1H30M",
+      "inputs": [
+        "burndown",
+        "impediment-log",
+        "review-notes"
+      ],
+      "activities": [
+        {
+          "id": "retrospective",
+          "name": "Analisi dello sprint",
+          "raci": {
+            "R": [
+              "scrum-master"
+            ],
+            "A": "tech-lead",
+            "C": [
+              "developers",
+              "product-owner"
+            ]
+          }
+        },
+        {
+          "id": "improvement-plan",
+          "name": "Azioni di miglioramento e aggiornamento della Definition of Done",
+          "raci": {
+            "R": [
+              "scrum-master",
+              "developers"
+            ],
+            "A": "tech-lead"
+          }
+        }
+      ],
+      "outputs": [
+        "retro-actions",
+        "definition-of-done"
+      ],
+      "gate": {
+        "id": "g-next-sprint",
+        "name": "Chiusura dello sprint",
+        "criteria": [
+          "Almeno un'azione di miglioramento concordata",
+          "Azioni inserite nel prossimo sprint backlog"
+        ],
+        "approvers": [
+          "tech-lead"
+        ]
+      }
+    },
+    {
+      "id": "release",
+      "name": "Rilascio incremento",
+      "order": 5,
+      "kind": "event",
+      "inputs": [
+        "increment",
+        "review-notes"
+      ],
+      "activities": [
+        {
+          "id": "release-prep",
+          "name": "Preparazione del rilascio",
+          "raci": {
+            "R": [
+              "ops",
+              "developers"
+            ],
+            "A": "ops",
+            "C": [
+              "tech-lead"
+            ]
+          }
+        },
+        {
+          "id": "release-deploy",
+          "name": "Deploy in produzione",
+          "raci": {
+            "R": [
+              "ops"
+            ],
+            "A": "ops",
+            "I": [
+              "product-owner",
+              "client"
+            ]
+          }
+        },
+        {
+          "id": "release-notes-dev",
+          "name": "Release notes",
+          "raci": {
+            "R": [
+              "developers"
+            ],
+            "A": "product-owner",
+            "I": [
+              "client"
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        "release-notes"
+      ],
+      "gate": {
+        "id": "g-go-live",
+        "name": "Go per il rilascio",
+        "criteria": [
+          "Incremento accettato in review",
+          "Piano di rollback verificato",
+          "Release notes pronte"
+        ],
+        "approvers": [
+          "product-owner",
+          "ops"
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "from": "product-backlog",
+      "to": "sprint-planning",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "sprint-planning",
+      "to": "sprint",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "sprint",
+      "to": "sprint-review",
+      "trigger": "timebox_end",
+      "description": "Lo sprint finisce allo scadere del timebox, non a lavoro finito"
+    },
+    {
+      "from": "sprint-review",
+      "to": "sprint-retrospective",
+      "trigger": "gate_approved"
+    },
+    {
+      "from": "sprint-retrospective",
+      "to": "sprint-planning",
+      "trigger": "gate_approved",
+      "description": "Inizio dello sprint successivo"
+    },
+    {
+      "from": "sprint-review",
+      "to": "release",
+      "trigger": "gate_approved",
+      "description": "Incremento accettato e da rilasciare"
+    },
+    {
+      "from": "sprint-review",
+      "to": "product-backlog",
+      "trigger": "change_request",
+      "description": "Il feedback degli stakeholder diventa nuovi elementi di backlog"
+    },
+    {
+      "from": "sprint",
+      "to": "product-backlog",
+      "trigger": "defect_found",
+      "description": "Difetti e lavoro non completato tornano nel backlog"
+    }
+  ],
+  "crossCuttingProcesses": [
+    {
+      "id": "backlog-management",
+      "name": "Gestione del cambiamento tramite backlog",
+      "appliesTo": "all",
+      "owner": "product-owner"
+    },
+    {
+      "id": "risk-management",
+      "name": "Gestione rischi e impedimenti",
+      "appliesTo": "all",
+      "owner": "scrum-master"
+    },
+    {
+      "id": "quality-assurance",
+      "name": "Quality assurance e Definition of Done",
+      "appliesTo": "all",
+      "owner": "developers"
+    },
+    {
+      "id": "configuration-management",
+      "name": "Configuration management",
+      "appliesTo": [
+        "sprint",
+        "release"
+      ],
+      "owner": "ops"
+    },
+    {
+      "id": "progress-reporting",
+      "name": "Metriche: burndown e velocity",
+      "appliesTo": "all",
+      "owner": "scrum-master"
+    }
+  ]
+}

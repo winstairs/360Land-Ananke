@@ -1,0 +1,1491 @@
+{
+  "id": "waterfall-e2e-agents",
+  "name": "Topologia agenti per la pipeline waterfall",
+  "version": "1.1.0",
+  "description": "PM Office agentico come supervisore, un orchestratore per fase con agenti specialisti. Gli agenti preparano e verificano; le decisioni di gate restano agli approvatori umani del ProcessModel.",
+  "processModel": "waterfall-e2e",
+  "supervisor": {
+    "id": "pm-office",
+    "name": "PM Office agentico",
+    "description": "Supervisione dell'intero ciclo: stato del progetto, transizioni tra fasi, processi trasversali, escalation verso gli umani",
+    "lead": "pm-lead-agent",
+    "agents": [
+      {
+        "id": "pm-lead-agent",
+        "name": "Coordinatore PM",
+        "responsibilities": [
+          "Governa la macchina a stati del processo: attiva la fase successiva solo dopo l'approvazione umana del gate",
+          "Passa input e vincoli all'orchestratore di fase e ne riceve gli esiti",
+          "Esegue le transizioni di ritorno (difetti, change request) su proposta degli agenti competenti",
+          "Riceve le escalation degli orchestratori e decide se risolverle o portarle all'umano"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "supervised",
+        "tools": [
+          "process-state-store",
+          "orchestrator-dispatch",
+          "notifications"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "read-gate-decisions",
+            "name": "Lettura decisioni di gate",
+            "cron": "*/30 8-19 * * 1-5",
+            "action": "apply-gate-decisions"
+          }
+        ]
+      },
+      {
+        "id": "planner-agent",
+        "name": "Agente di pianificazione e controllo",
+        "responsibilities": [
+          "Mantiene la baseline di tempi, costi e ambito",
+          "Misura l'avanzamento rispetto al piano e segnala gli scostamenti",
+          "Propone ripianificazioni al Coordinatore PM"
+        ],
+        "consumes": [
+          "pm-plan"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "advisory",
+        "tools": [
+          "project-schedule",
+          "spreadsheet"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "plan-progress",
+            "name": "Avanzamento rispetto al piano",
+            "cron": "0 9 * * 1"
+          }
+        ]
+      },
+      {
+        "id": "risk-agent",
+        "name": "Agente gestione rischi",
+        "responsibilities": [
+          "Redige il piano di gestione dei rischi in fase di pianificazione",
+          "Mantiene il registro rischi e raccoglie segnali da tutti gli orchestratori",
+          "Propone risposte ai rischi e ne monitora l'efficacia"
+        ],
+        "activities": [
+          "risk-plan"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "advisory",
+        "crossCutting": "risk-management",
+        "tools": [
+          "risk-register"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "risk-plan",
+            "name": "Piano di gestione dei rischi",
+            "cron": "0 10 * * 1-5",
+            "activity": "risk-plan"
+          },
+          {
+            "id": "risk-register",
+            "name": "Aggiornamento registro rischi",
+            "cron": "0 12 * * 1-5"
+          }
+        ]
+      },
+      {
+        "id": "gatekeeper-agent",
+        "name": "Agente di verifica dei gate",
+        "responsibilities": [
+          "Verifica in modo indipendente i criteri di uscita di ogni gate, senza aver prodotto gli artefatti di fase",
+          "Compone il pacchetto di evidenze per gli approvatori umani",
+          "Restituisce all'orchestratore i criteri non soddisfatti per il rework"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "advisory",
+        "tools": [
+          "artifact-read",
+          "traceability-query"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "check-gate",
+            "name": "Verifica criteri di gate",
+            "cron": "0 8 * * 1-5"
+          },
+          {
+            "id": "evidence-pack",
+            "name": "Preparazione pacchetto evidenze",
+            "cron": "0 16 * * 5"
+          }
+        ]
+      },
+      {
+        "id": "change-agent",
+        "name": "Agente change control",
+        "responsibilities": [
+          "Registra le change request da qualunque fase",
+          "Esegue l'analisi d'impatto su requisiti, design, codice, tempi e costi",
+          "Propone al Coordinatore PM la transizione di ritorno e l'approvazione umana necessaria"
+        ],
+        "activities": [
+          "change-management"
+        ],
+        "produces": [
+          "change-log"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "advisory",
+        "crossCutting": "change-control",
+        "tools": [
+          "change-register",
+          "traceability-query"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "change-management",
+            "name": "Analisi delle change request aperte",
+            "cron": "0 10 * * 1-5",
+            "activity": "change-management"
+          }
+        ]
+      },
+      {
+        "id": "traceability-agent",
+        "name": "Agente di tracciabilità",
+        "responsibilities": [
+          "Costruisce la matrice di tracciabilità in fase di requisiti",
+          "La mantiene aggiornata lungo tutte le fasi: requisito, design, codice, test, rilascio",
+          "Segnala requisiti senza copertura di design o di test"
+        ],
+        "activities": [
+          "traceability"
+        ],
+        "consumes": [
+          "srs"
+        ],
+        "produces": [
+          "traceability-matrix"
+        ],
+        "supportsRole": "ba",
+        "autonomy": "autonomous",
+        "tools": [
+          "traceability-store",
+          "repo-read"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "traceability",
+            "name": "Aggiornamento matrice di tracciabilità",
+            "cron": "0 */4 * * 1-5",
+            "activity": "traceability"
+          },
+          {
+            "id": "coverage-gaps",
+            "name": "Segnalazione requisiti senza copertura",
+            "cron": "30 17 * * 5"
+          }
+        ]
+      },
+      {
+        "id": "qa-auditor-agent",
+        "name": "Agente quality assurance",
+        "responsibilities": [
+          "Verifica la conformità al piano qualità in ogni fase",
+          "Esegue audit di processo indipendenti dagli agenti che producono il lavoro",
+          "Segnala non conformità al Coordinatore PM"
+        ],
+        "consumes": [
+          "pm-plan"
+        ],
+        "supportsRole": "qa",
+        "autonomy": "advisory",
+        "crossCutting": "quality-assurance",
+        "tools": [
+          "artifact-read",
+          "checklists"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "quality-audit",
+            "name": "Audit di conformità al piano qualità",
+            "cron": "0 11 * * 3"
+          }
+        ]
+      },
+      {
+        "id": "config-agent",
+        "name": "Agente configuration management",
+        "responsibilities": [
+          "Versiona le baseline degli artefatti a ogni gate approvato",
+          "Gestisce tag di release e coerenza tra versioni di documenti, codice e build",
+          "Esegue l'archiviazione documentale in chiusura"
+        ],
+        "activities": [
+          "archive"
+        ],
+        "supportsRole": "ops",
+        "autonomy": "autonomous",
+        "crossCutting": "configuration-management",
+        "tools": [
+          "repo-write",
+          "document-store"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "baseline",
+            "name": "Versionamento delle baseline approvate",
+            "cron": "0 20 * * 1-5"
+          },
+          {
+            "id": "archive",
+            "name": "Archiviazione documentale",
+            "cron": "0 18 * * 5",
+            "activity": "archive"
+          }
+        ]
+      },
+      {
+        "id": "reporting-agent",
+        "name": "Agente di reporting",
+        "responsibilities": [
+          "Produce i report di avanzamento periodici",
+          "Prepara le comunicazioni agli stakeholder secondo il piano di comunicazione",
+          "Invia solo dopo revisione umana"
+        ],
+        "consumes": [
+          "pm-plan"
+        ],
+        "supportsRole": "pm",
+        "autonomy": "supervised",
+        "crossCutting": "progress-reporting",
+        "tools": [
+          "docs",
+          "email"
+        ],
+        "scheduledTasks": [
+          {
+            "id": "weekly-report",
+            "name": "Report settimanale agli stakeholder",
+            "cron": "0 17 * * 5"
+          }
+        ]
+      }
+    ]
+  },
+  "orchestratorDefaults": {
+    "responsibilities": [
+      "Riceve dal Coordinatore PM input, vincoli e criteri del gate di fase",
+      "Scompone le attività di fase in task e li assegna agli agenti specialisti",
+      "Gestisce dipendenze e parallelismo tra gli agenti",
+      "Aggrega gli output e si assicura che ogni artefatto atteso sia prodotto",
+      "Sottopone il pacchetto di fase al gatekeeper e gestisce il rework",
+      "Segnala rischi al risk-agent e change request al change-agent",
+      "Scala al Coordinatore PM blocchi, conflitti e decisioni fuori mandato"
+    ]
+  },
+  "orchestrators": [
+    {
+      "id": "initiation-orchestrator",
+      "name": "Orchestratore avvio",
+      "stage": "initiation",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "agents": [
+        {
+          "id": "business-case-agent",
+          "name": "Agente business case",
+          "responsibilities": [
+            "Analisi costi-benefici e ROI",
+            "Confronto tra alternative",
+            "Redazione del business case"
+          ],
+          "activities": [
+            "business-case-dev"
+          ],
+          "produces": [
+            "business-case"
+          ],
+          "supportsRole": "ba",
+          "autonomy": "supervised",
+          "tools": [
+            "web-research",
+            "spreadsheet",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "business-case-dev",
+              "name": "Redazione business case",
+              "cron": "0 10 * * 1-5",
+              "activity": "business-case-dev"
+            }
+          ]
+        },
+        {
+          "id": "feasibility-agent",
+          "name": "Agente fattibilità",
+          "responsibilities": [
+            "Valutazione di fattibilità tecnica ed economica",
+            "Analisi di vincoli e opzioni di stack",
+            "Primi rischi tecnici verso il risk-agent"
+          ],
+          "activities": [
+            "feasibility"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "advisory",
+          "tools": [
+            "web-research",
+            "repo-read"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "feasibility",
+              "name": "Studio di fattibilità",
+              "cron": "0 11 * * 1-5",
+              "activity": "feasibility"
+            }
+          ]
+        },
+        {
+          "id": "stakeholder-agent",
+          "name": "Agente analisi stakeholder",
+          "responsibilities": [
+            "Mappa stakeholder, interessi e influenza",
+            "Proposta del piano di coinvolgimento"
+          ],
+          "activities": [
+            "stakeholder-analysis"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "advisory",
+          "tools": [
+            "docs",
+            "directory"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "stakeholder-analysis",
+              "name": "Analisi stakeholder",
+              "cron": "0 12 * * 1-5",
+              "activity": "stakeholder-analysis"
+            }
+          ]
+        },
+        {
+          "id": "charter-agent",
+          "name": "Agente project charter",
+          "responsibilities": [
+            "Redazione del Project Charter da business case e fattibilità"
+          ],
+          "activities": [
+            "charter-dev"
+          ],
+          "consumes": [
+            "business-case"
+          ],
+          "produces": [
+            "project-charter"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "charter-dev",
+              "name": "Redazione Project Charter",
+              "cron": "0 13 * * 1-5",
+              "activity": "charter-dev"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning-orchestrator",
+      "name": "Orchestratore pianificazione",
+      "stage": "planning",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Coinvolge il risk-agent del PM Office per il piano rischi"
+      ],
+      "agents": [
+        {
+          "id": "wbs-agent",
+          "name": "Agente WBS",
+          "responsibilities": [
+            "Scomposizione dell'ambito in work package e deliverable"
+          ],
+          "activities": [
+            "wbs"
+          ],
+          "consumes": [
+            "project-charter"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "project-schedule"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "wbs",
+              "name": "Work Breakdown Structure",
+              "cron": "0 14 * * 1-5",
+              "activity": "wbs"
+            }
+          ]
+        },
+        {
+          "id": "estimation-agent",
+          "name": "Agente stime e budget",
+          "responsibilities": [
+            "Stima bottom-up di effort e costi sulla WBS",
+            "Calcolo di contingenze e riserve"
+          ],
+          "activities": [
+            "budget"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "advisory",
+          "tools": [
+            "spreadsheet"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "budget",
+              "name": "Stima costi e budget",
+              "cron": "0 15 * * 1-5",
+              "activity": "budget"
+            }
+          ]
+        },
+        {
+          "id": "scheduler-agent",
+          "name": "Agente cronoprogramma",
+          "responsibilities": [
+            "Dipendenze, cammino critico e Gantt",
+            "Allocazione delle risorse"
+          ],
+          "activities": [
+            "schedule"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "project-schedule"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "schedule",
+              "name": "Cronoprogramma (Gantt)",
+              "cron": "0 16 * * 1-5",
+              "activity": "schedule"
+            }
+          ]
+        },
+        {
+          "id": "plan-writer-agent",
+          "name": "Agente Project Management Plan",
+          "responsibilities": [
+            "Piano qualità e piano di comunicazione",
+            "Consolidamento di WBS, cronoprogramma, budget e rischi nel PMP"
+          ],
+          "activities": [
+            "quality-comm-plan"
+          ],
+          "consumes": [
+            "project-charter"
+          ],
+          "produces": [
+            "pm-plan"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "quality-comm-plan",
+              "name": "Piano qualità e comunicazione",
+              "cron": "0 9 * * 1-5",
+              "activity": "quality-comm-plan"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "requirements-orchestrator",
+      "name": "Orchestratore requisiti",
+      "stage": "requirements",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Coinvolge il traceability-agent del PM Office per la matrice di tracciabilità"
+      ],
+      "agents": [
+        {
+          "id": "elicitation-agent",
+          "name": "Agente raccolta requisiti",
+          "responsibilities": [
+            "Prepara interviste e workshop",
+            "Estrae requisiti da trascrizioni e documenti",
+            "Non sostituisce il confronto diretto con il cliente"
+          ],
+          "activities": [
+            "elicitation"
+          ],
+          "consumes": [
+            "project-charter"
+          ],
+          "supportsRole": "ba",
+          "autonomy": "supervised",
+          "tools": [
+            "transcription",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "elicitation",
+              "name": "Raccolta requisiti dalle fonti",
+              "cron": "0 9 * * 1-5",
+              "activity": "elicitation"
+            },
+            {
+              "id": "meeting-summary",
+              "name": "Sintesi incontri con il cliente",
+              "cron": "0 18 * * 1-5",
+              "activity": "elicitation"
+            }
+          ]
+        },
+        {
+          "id": "requirements-writer-agent",
+          "name": "Agente specifica requisiti",
+          "responsibilities": [
+            "Redazione della SRS con requisiti funzionali e non funzionali",
+            "Assegnazione di ID univoci ai requisiti"
+          ],
+          "activities": [
+            "srs-dev"
+          ],
+          "consumes": [
+            "project-charter",
+            "pm-plan"
+          ],
+          "produces": [
+            "srs"
+          ],
+          "supportsRole": "ba",
+          "autonomy": "supervised",
+          "reviewedBy": "requirements-validator-agent",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "srs-update",
+              "name": "Aggiornamento SRS",
+              "cron": "0 14 * * 1-5",
+              "activity": "srs-dev"
+            }
+          ]
+        },
+        {
+          "id": "requirements-validator-agent",
+          "name": "Agente validazione requisiti",
+          "responsibilities": [
+            "Verifica completezza, univocità, verificabilità e assenza di conflitti",
+            "Restituisce i difetti di specifica al writer"
+          ],
+          "activities": [
+            "srs-dev"
+          ],
+          "consumes": [
+            "srs"
+          ],
+          "supportsRole": "ba",
+          "autonomy": "advisory",
+          "tools": [
+            "docs",
+            "checklists"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "validity",
+              "name": "Verifica validità requisiti",
+              "cron": "0 10 * * 1-5",
+              "activity": "srs-dev"
+            },
+            {
+              "id": "ambiguity",
+              "name": "Controllo ambiguità e conflitti",
+              "cron": "0 15 * * 1-5",
+              "activity": "srs-dev"
+            },
+            {
+              "id": "testability",
+              "name": "Verifica testabilità dei requisiti",
+              "cron": "0 11 * * 3",
+              "activity": "srs-dev"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "design-orchestrator",
+      "name": "Orchestratore progettazione",
+      "stage": "design",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "agents": [
+        {
+          "id": "architect-agent",
+          "name": "Agente architettura",
+          "responsibilities": [
+            "High-Level Design e decisioni architetturali (ADR)",
+            "Copertura dei requisiti non funzionali",
+            "Consolidamento del Software Design Document"
+          ],
+          "activities": [
+            "hld"
+          ],
+          "consumes": [
+            "srs",
+            "traceability-matrix"
+          ],
+          "produces": [
+            "sdd"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "supervised",
+          "tools": [
+            "docs",
+            "diagramming"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "hld",
+              "name": "Architettura (High-Level Design)",
+              "cron": "0 13 * * 1-5",
+              "activity": "hld"
+            }
+          ]
+        },
+        {
+          "id": "security-design-agent",
+          "name": "Agente security by design",
+          "responsibilities": [
+            "Threat modeling",
+            "Requisiti e controlli di sicurezza nel design"
+          ],
+          "activities": [
+            "hld"
+          ],
+          "consumes": [
+            "srs"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "advisory",
+          "tools": [
+            "docs",
+            "threat-modeling"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "hld",
+              "name": "Architettura (High-Level Design)",
+              "cron": "0 14 * * 1-5",
+              "activity": "hld"
+            }
+          ]
+        },
+        {
+          "id": "detailed-design-agent",
+          "name": "Agente design di dettaglio",
+          "responsibilities": [
+            "Low-Level Design dei componenti",
+            "Contratti delle API"
+          ],
+          "activities": [
+            "lld"
+          ],
+          "consumes": [
+            "srs"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "supervised",
+          "reviewedBy": "architect-agent",
+          "tools": [
+            "docs",
+            "diagramming"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "lld",
+              "name": "Design di dettaglio (Low-Level Design)",
+              "cron": "0 15 * * 1-5",
+              "activity": "lld"
+            }
+          ]
+        },
+        {
+          "id": "data-interface-agent",
+          "name": "Agente modello dati e interfacce",
+          "responsibilities": [
+            "Modello dati logico e fisico",
+            "Specifica delle interfacce interne ed esterne"
+          ],
+          "activities": [
+            "data-model"
+          ],
+          "consumes": [
+            "srs"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "supervised",
+          "reviewedBy": "architect-agent",
+          "tools": [
+            "docs",
+            "diagramming"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "data-model",
+              "name": "Modello dati e interfacce",
+              "cron": "0 16 * * 1-5",
+              "activity": "data-model"
+            }
+          ]
+        },
+        {
+          "id": "test-planner-agent",
+          "name": "Agente piano di test",
+          "responsibilities": [
+            "Strategia e piano di test",
+            "Copertura di ogni requisito con casi di test"
+          ],
+          "activities": [
+            "test-planning"
+          ],
+          "consumes": [
+            "srs",
+            "traceability-matrix"
+          ],
+          "produces": [
+            "test-plan"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "supervised",
+          "tools": [
+            "docs",
+            "test-management"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "test-planning",
+              "name": "Piano di test",
+              "cron": "0 9 * * 1-5",
+              "activity": "test-planning"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "implementation-orchestrator",
+      "name": "Orchestratore implementazione",
+      "stage": "implementation",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Istanzia un coder-agent per componente secondo il design",
+        "Non accetta codice senza review indipendente e unit test superati"
+      ],
+      "agents": [
+        {
+          "id": "coder-agent",
+          "name": "Agente sviluppatore",
+          "responsibilities": [
+            "Implementa un componente secondo LLD e contratti API",
+            "Rispetta gli standard di codifica"
+          ],
+          "activities": [
+            "coding"
+          ],
+          "consumes": [
+            "sdd"
+          ],
+          "produces": [
+            "source-code"
+          ],
+          "supportsRole": "dev",
+          "autonomy": "supervised",
+          "reviewedBy": "code-review-agent",
+          "scalable": true,
+          "tools": [
+            "repo-write",
+            "sandbox"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "coding",
+              "name": "Sviluppo",
+              "cron": "0 10 * * 1-5",
+              "activity": "coding"
+            }
+          ]
+        },
+        {
+          "id": "code-review-agent",
+          "name": "Agente code review",
+          "responsibilities": [
+            "Review indipendente di correttezza, sicurezza e manutenibilità",
+            "Verifica aderenza al design"
+          ],
+          "activities": [
+            "code-review"
+          ],
+          "consumes": [
+            "source-code",
+            "sdd"
+          ],
+          "supportsRole": "architect",
+          "autonomy": "advisory",
+          "tools": [
+            "repo-read",
+            "static-analysis"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "code-review",
+              "name": "Code review",
+              "cron": "0 11 * * 1-5",
+              "activity": "code-review"
+            }
+          ]
+        },
+        {
+          "id": "unit-test-agent",
+          "name": "Agente unit test",
+          "responsibilities": [
+            "Scrive ed esegue gli unit test",
+            "Misura la copertura rispetto alla soglia del piano qualità"
+          ],
+          "activities": [
+            "unit-test"
+          ],
+          "consumes": [
+            "source-code"
+          ],
+          "supportsRole": "dev",
+          "autonomy": "supervised",
+          "scalable": true,
+          "tools": [
+            "repo-write",
+            "sandbox",
+            "coverage"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "unit-test",
+              "name": "Unit test",
+              "cron": "0 12 * * 1-5",
+              "activity": "unit-test"
+            }
+          ]
+        },
+        {
+          "id": "build-agent",
+          "name": "Agente build e CI",
+          "responsibilities": [
+            "Pipeline di build e integrazione continua",
+            "Build riproducibili e versionate"
+          ],
+          "activities": [
+            "ci-build"
+          ],
+          "consumes": [
+            "source-code"
+          ],
+          "produces": [
+            "build"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "autonomous",
+          "tools": [
+            "ci-pipeline",
+            "artifact-registry"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "ci-build",
+              "name": "Build e integrazione continua",
+              "cron": "0 13 * * 1-5",
+              "activity": "ci-build"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testing-orchestrator",
+      "name": "Orchestratore integrazione e test",
+      "stage": "testing",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Propone il ritorno all'implementazione quando emergono difetti bloccanti"
+      ],
+      "agents": [
+        {
+          "id": "integration-test-agent",
+          "name": "Agente test di integrazione",
+          "responsibilities": [
+            "Test delle interfacce tra componenti"
+          ],
+          "activities": [
+            "integration-test"
+          ],
+          "consumes": [
+            "build",
+            "test-plan"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "autonomous",
+          "tools": [
+            "test-environment",
+            "test-management"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "integration-test",
+              "name": "Test di integrazione",
+              "cron": "0 14 * * 1-5",
+              "activity": "integration-test"
+            }
+          ]
+        },
+        {
+          "id": "system-test-agent",
+          "name": "Agente test di sistema",
+          "responsibilities": [
+            "Test end-to-end sui requisiti funzionali"
+          ],
+          "activities": [
+            "system-test"
+          ],
+          "consumes": [
+            "build",
+            "test-plan",
+            "srs"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "autonomous",
+          "tools": [
+            "test-environment",
+            "test-management"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "system-test",
+              "name": "Test di sistema",
+              "cron": "0 15 * * 1-5",
+              "activity": "system-test"
+            }
+          ]
+        },
+        {
+          "id": "nfr-test-agent",
+          "name": "Agente test non funzionali",
+          "responsibilities": [
+            "Test di performance e carico",
+            "Test di sicurezza (SAST, DAST, dipendenze)"
+          ],
+          "activities": [
+            "nfr-test"
+          ],
+          "consumes": [
+            "build",
+            "test-plan"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "autonomous",
+          "tools": [
+            "test-environment",
+            "load-testing",
+            "security-scanning"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "nfr-test",
+              "name": "Test non funzionali (performance, sicurezza)",
+              "cron": "0 16 * * 1-5",
+              "activity": "nfr-test"
+            }
+          ]
+        },
+        {
+          "id": "uat-support-agent",
+          "name": "Agente supporto UAT",
+          "responsibilities": [
+            "Prepara gli script UAT",
+            "Raccoglie esiti e feedback del cliente",
+            "L'UAT è eseguito e firmato da persone"
+          ],
+          "activities": [
+            "uat"
+          ],
+          "consumes": [
+            "srs",
+            "test-plan"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "advisory",
+          "tools": [
+            "test-management",
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "uat",
+              "name": "User Acceptance Test",
+              "cron": "0 9 * * 1-5",
+              "activity": "uat"
+            }
+          ]
+        },
+        {
+          "id": "test-analyst-agent",
+          "name": "Agente analisi difetti e report",
+          "responsibilities": [
+            "Triage e classificazione dei difetti",
+            "Report di test consolidato",
+            "Segnala i difetti bloccanti all'orchestratore"
+          ],
+          "consumes": [
+            "test-plan"
+          ],
+          "produces": [
+            "test-report",
+            "defect-log"
+          ],
+          "supportsRole": "qa",
+          "autonomy": "supervised",
+          "tools": [
+            "test-management",
+            "issue-tracker"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "defect-triage",
+              "name": "Triage dei difetti",
+              "cron": "0 9 * * 1-5"
+            },
+            {
+              "id": "test-report",
+              "name": "Report di test consolidato",
+              "cron": "0 17 * * 1-5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deployment-orchestrator",
+      "name": "Orchestratore rilascio",
+      "stage": "deployment",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Non esegue migrazione né deploy in produzione senza il go esplicito degli approvatori umani"
+      ],
+      "agents": [
+        {
+          "id": "release-planner-agent",
+          "name": "Agente piano di rilascio",
+          "responsibilities": [
+            "Piano di rilascio e di rollback",
+            "Runbook operativo"
+          ],
+          "activities": [
+            "release-plan"
+          ],
+          "consumes": [
+            "build",
+            "test-report"
+          ],
+          "produces": [
+            "runbook"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "release-plan",
+              "name": "Piano di rilascio e rollback",
+              "cron": "0 11 * * 1-5",
+              "activity": "release-plan"
+            }
+          ]
+        },
+        {
+          "id": "migration-agent",
+          "name": "Agente migrazione dati",
+          "responsibilities": [
+            "Script di migrazione e dry-run",
+            "Verifica di integrità dei dati migrati"
+          ],
+          "activities": [
+            "data-migration"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "tools": [
+            "database",
+            "sandbox"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "data-migration",
+              "name": "Migrazione dati",
+              "cron": "0 12 * * 1-5",
+              "activity": "data-migration"
+            }
+          ]
+        },
+        {
+          "id": "deploy-agent",
+          "name": "Agente deploy",
+          "responsibilities": [
+            "Provisioning e deploy tramite pipeline e infrastruttura come codice",
+            "Smoke test post deploy ed eventuale rollback"
+          ],
+          "activities": [
+            "prod-deploy"
+          ],
+          "consumes": [
+            "build"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "tools": [
+            "ci-cd",
+            "iac",
+            "monitoring"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "prod-deploy",
+              "name": "Deploy in produzione",
+              "cron": "0 13 * * 1-5",
+              "activity": "prod-deploy"
+            }
+          ]
+        },
+        {
+          "id": "docs-agent",
+          "name": "Agente documentazione e formazione",
+          "responsibilities": [
+            "Manuale utente e release notes",
+            "Materiali di formazione"
+          ],
+          "activities": [
+            "docs-training"
+          ],
+          "consumes": [
+            "srs",
+            "test-report"
+          ],
+          "produces": [
+            "user-manual",
+            "release-notes"
+          ],
+          "supportsRole": "ba",
+          "autonomy": "supervised",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "docs-training",
+              "name": "Documentazione utente e formazione",
+              "cron": "0 14 * * 1-5",
+              "activity": "docs-training"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operations-orchestrator",
+      "name": "Orchestratore esercizio e manutenzione",
+      "stage": "operations",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Instrada le richieste evolutive al change-agent",
+        "Riusa code review e build dell'implementazione per le correzioni"
+      ],
+      "agents": [
+        {
+          "id": "monitoring-agent",
+          "name": "Agente monitoraggio",
+          "responsibilities": [
+            "Osservabilità, metriche e alert",
+            "Verifica della stabilità durante l'hypercare"
+          ],
+          "activities": [
+            "monitoring",
+            "hypercare"
+          ],
+          "consumes": [
+            "runbook"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "autonomous",
+          "tools": [
+            "monitoring",
+            "logs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "monitoring",
+              "name": "Monitoraggio",
+              "cron": "0 15 * * 1-5",
+              "activity": "monitoring"
+            },
+            {
+              "id": "hypercare",
+              "name": "Hypercare post go-live",
+              "cron": "0 16 * * 1-5",
+              "activity": "hypercare"
+            }
+          ]
+        },
+        {
+          "id": "incident-agent",
+          "name": "Agente gestione incidenti",
+          "responsibilities": [
+            "Triage degli incidenti e analisi delle cause",
+            "Escalation al reperibile umano"
+          ],
+          "activities": [
+            "hypercare"
+          ],
+          "consumes": [
+            "runbook",
+            "release-notes"
+          ],
+          "supportsRole": "ops",
+          "autonomy": "supervised",
+          "tools": [
+            "monitoring",
+            "logs",
+            "issue-tracker",
+            "notifications"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "hypercare",
+              "name": "Hypercare post go-live",
+              "cron": "0 16 * * 1-5",
+              "activity": "hypercare"
+            }
+          ]
+        },
+        {
+          "id": "maintenance-agent",
+          "name": "Agente manutenzione correttiva",
+          "responsibilities": [
+            "Correzione dei difetti in esercizio",
+            "Rilascio delle patch tramite la pipeline esistente"
+          ],
+          "activities": [
+            "corrective-maintenance"
+          ],
+          "supportsRole": "dev",
+          "autonomy": "supervised",
+          "reviewedBy": "code-review-agent",
+          "tools": [
+            "repo-write",
+            "sandbox",
+            "ci-pipeline"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "corrective-maintenance",
+              "name": "Manutenzione correttiva",
+              "cron": "0 9 * * 1-5",
+              "activity": "corrective-maintenance"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "closure-orchestrator",
+      "name": "Orchestratore chiusura",
+      "stage": "closure",
+      "escalatesTo": "pm-lead-agent",
+      "gateReviewer": "gatekeeper-agent",
+      "responsibilities": [
+        "Coinvolge il config-agent del PM Office per l'archiviazione"
+      ],
+      "agents": [
+        {
+          "id": "lessons-learned-agent",
+          "name": "Agente lessons learned",
+          "responsibilities": [
+            "Analisi di scostamenti, difetti e change request",
+            "Sintesi delle lezioni apprese"
+          ],
+          "activities": [
+            "lessons"
+          ],
+          "consumes": [
+            "test-report",
+            "change-log",
+            "pm-plan"
+          ],
+          "produces": [
+            "lessons-learned"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "docs",
+            "analytics"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "lessons",
+              "name": "Lessons learned",
+              "cron": "0 10 * * 1-5",
+              "activity": "lessons"
+            }
+          ]
+        },
+        {
+          "id": "closure-report-agent",
+          "name": "Agente chiusura progetto",
+          "responsibilities": [
+            "Rilascio delle risorse",
+            "Preparazione della chiusura contrattuale, firmata da persone",
+            "Project Closure Report"
+          ],
+          "activities": [
+            "release-resources",
+            "contract-close"
+          ],
+          "consumes": [
+            "pm-plan",
+            "change-log"
+          ],
+          "produces": [
+            "closure-report"
+          ],
+          "supportsRole": "pm",
+          "autonomy": "supervised",
+          "tools": [
+            "docs"
+          ],
+          "scheduledTasks": [
+            {
+              "id": "release-resources",
+              "name": "Rilascio risorse",
+              "cron": "0 11 * * 1-5",
+              "activity": "release-resources"
+            },
+            {
+              "id": "contract-close",
+              "name": "Chiusura contrattuale",
+              "cron": "0 12 * * 1-5",
+              "activity": "contract-close"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "humanCheckpoints": [
+    {
+      "id": "gate-approval",
+      "description": "Approvazione di ogni gate da parte degli approvatori definiti nel ProcessModel",
+      "roles": [
+        "sponsor",
+        "client",
+        "pm",
+        "architect",
+        "ops"
+      ],
+      "appliesTo": "all"
+    },
+    {
+      "id": "scope-cost-change",
+      "description": "Approvazione di change request che modificano ambito, tempi o costi in baseline",
+      "roles": [
+        "sponsor"
+      ],
+      "appliesTo": "all"
+    },
+    {
+      "id": "stakeholder-comms",
+      "description": "Revisione delle comunicazioni esterne prima dell'invio",
+      "roles": [
+        "pm"
+      ],
+      "appliesTo": "all"
+    },
+    {
+      "id": "requirements-validation",
+      "description": "Conferma dei requisiti con il cliente",
+      "roles": [
+        "client"
+      ],
+      "appliesTo": [
+        "requirements"
+      ]
+    },
+    {
+      "id": "uat-execution",
+      "description": "Esecuzione e firma dell'UAT",
+      "roles": [
+        "client"
+      ],
+      "appliesTo": [
+        "testing"
+      ]
+    },
+    {
+      "id": "production-change",
+      "description": "Go esplicito per migrazione dati e deploy in produzione",
+      "roles": [
+        "ops",
+        "sponsor"
+      ],
+      "appliesTo": [
+        "deployment",
+        "operations"
+      ]
+    },
+    {
+      "id": "contract-signoff",
+      "description": "Chiusura contrattuale",
+      "roles": [
+        "sponsor"
+      ],
+      "appliesTo": [
+        "closure"
+      ]
+    }
+  ]
+}
