@@ -25,9 +25,12 @@ Registro delle decisioni di progetto. Ogni voce: data, decisione, motivo. Le dec
 | 2026-10-19 | Il worker sincronizza a cron il gateway LiteLLM con il catalogo tramite l'API di gestione modelli; LiteLLM salva i modelli in un database `litellm` sullo stesso Postgres | Modelli configurabili dalla GUI senza riavvii né eventi; il file del gateway non è più la fonte |
 | 2026-10-19 | Le chiavi dei provider stanno solo nelle variabili d'ambiente del gateway; il catalogo ne indica il nome | Nessun segreto nel database o nelle API di Ananke, che non ha ancora autenticazione |
 | 2026-10-19 | Il modello di riserva dei preset (`fallbackModel`) è gestito dal runner, non dal router del gateway | Il fallback segue la configurazione di ogni preset |
+| 2026-11-09 | Due modalità di deploy con compose sovrapponibili: **standalone** (`docker-compose.yml`, solo Ananke, default) ed **ecosistema** (`docker-compose.ecosystem.yml`, Ananke più i servizi collegati) | Demo e sviluppo restano leggeri e senza chiavi; l'ecosistema completo si definisce senza toccare lo standalone |
+| 2026-11-10 | Artefatti, revisioni e pacchetti di evidenze stanno in tabelle dedicate (`artifacts`, `reviews`, `evidence_packs`), solo inserimenti. La revisione è registrata quando gira il compito dell'agente `reviewedBy` (cron); il pacchetto di evidenze del gatekeeper è informativo per chi approva e non blocca il gate, che resta una decisione umana | Nessun evento: revisione e gatekeeper seguono i compiti pianificati; responsabilità finale umana |
 
 ## Decisioni aperte
 
+- [ ] **Servizi dell'ecosistema**: quali includere in `docker-compose.ecosystem.yml` (work tracker, repository, osservabilità, ecc.). Oggi il file è uno scheletro senza servizi.
 - [ ] **OpenProject come opzione di work tracker**: da aggiungere a connettori e configurazione (GPLv3, solo come servizio esterno; MCP ufficiale solo nell'edizione Enterprise, per la Community esiste `openproject-ce-mcp` con licenza MIT).
 - [ ] **Persistenza dei grafi LangGraph**: il checkpointer PostgreSQL ufficiale usa `psycopg` (LGPL-3.0). Alternative: accettarlo come libreria non modificata, oppure scrivere un checkpointer su `asyncpg` (Apache-2.0).
 - [ ] **Dipendenze transitive MPL-2.0**: `certifi` e `orjson` (backend), `lightningcss` (solo strumento di build del frontend). Copyleft debole a livello di file, usate senza modifiche: confermare se accettabili.

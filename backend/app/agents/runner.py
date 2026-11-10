@@ -33,15 +33,48 @@ def _prepare(state: RunState) -> RunState:
         f"Esegui il compito standard «{c['taskName']}».\n"
         "Restituisci: 1) cosa hai fatto, 2) risultati principali, 3) segnalazioni per il Coordinatore."
     )
+    for a in c.get("inputs", []):
+        prompt += f"\n\n--- Artefatto in ingresso: {a['name']} (versione {a['version']}) ---\n{a['content']}"
+    if c.get("reviewer"):
+        prompt += "\n\nLa tua risposta deve chiudersi con una riga «VERDETTO: approvato» oppure «VERDETTO: modifiche»."
+    if c.get("gate"):
+        prompt += "\n\nRevisioni disponibili: " + ("; ".join(
+            f"{r['artifactType']} v{r['version']} → {r['verdict']}" for r in c["gate"]["reviews"]) or "nessuna") + "."
+        prompt += "\nPer ogni criterio del gate scrivi una riga «CRITERIO <n>: met|unmet|unknown — motivazione»:"
+        prompt += "".join(f"\n{i}. {cr}" for i, cr in enumerate(c["gate"]["criteria"], 1))
     return {"system": system, "prompt": prompt}
+
+
+def _mock_output(c: dict[str, Any]) -> str:
+    """Esito simulato ma deterministico e strutturato, così il flusso degli artefatti si collauda senza modelli."""
+    head = (f"[simulazione] {c['agentName']} ha eseguito «{c['taskName']}» nella fase {c['stageName']}. "
+            "Nessuna chiamata a modelli: imposta LLM_MODE=live e le chiavi nel file .env per l'esecuzione reale.")
+    ins = c.get("inputs", [])
+    lines = [head]
+    if ins:
+        lines.append("Artefatti ricevuti: " + ", ".join(f"{a['name']} v{a['version']}" for a in ins) + ".")
+    if c.get("produces"):
+        lines.append(f"Bozza di «{', '.join(c['produces'])}» per il progetto {c['projectName']}.")
+    if c.get("reviewer"):
+        lines.append("Revisione completata." if ins else "Nessun artefatto da revisionare.")
+        lines.append("VERDETTO: approvato" if ins else "VERDETTO: modifiche")
+    if c.get("gate"):
+        g = c["gate"]
+        reviewed = bool(g["reviews"]) and all(r["verdict"] == "approved" for r in g["reviews"])
+        for i, cr in enumerate(g["criteria"], 1):
+            if "approvat" in cr.lower():  # richiede una decisione umana: la piattaforma non la può attestare
+                lines.append(f"CRITERIO {i}: unknown — richiede l'approvazione di una persona")
+            elif reviewed:
+                lines.append(f"CRITERIO {i}: met — artefatti revisionati e approvati")
+            else:
+                lines.append(f"CRITERIO {i}: unmet — manca una revisione approvata")
+    return "\n".join(lines)
 
 
 async def _act(state: RunState) -> RunState:
     c = state["context"]
     if settings.llm_mode != "live":
-        return {"output": (
-            f"[simulazione] {c['agentName']} ha eseguito «{c['taskName']}» nella fase {c['stageName']}. "
-            "Nessuna chiamata a modelli: imposta LLM_MODE=live e le chiavi nel file .env per l'esecuzione reale.")}
+        return {"output": _mock_output(c)}
     from openai import AsyncOpenAI  # import pigro: non serve in modalità mock
 
     client = AsyncOpenAI(base_url=settings.llm_base_url, api_key=settings.llm_api_key)

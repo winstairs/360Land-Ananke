@@ -1,16 +1,18 @@
 """Logica condivisa tra API e worker: configurazione attiva, coda dei compiti, transizioni di stato."""
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from .agents.runner import run_task
 from .catalog import Bundle, Catalog
-from .db import config_versions, engine, gate_decisions, llm_catalog_versions, projects, task_runs, utcnow
+from .db import (artifacts, config_versions, engine, evidence_packs, gate_decisions, llm_catalog_versions, projects, reviews,
+                 task_runs, utcnow)
 from .scheduling import effective_tasks, parse_duration, stage_is_active
 from .settings import settings
 from .validation import validate_bundle, validate_llm_catalog
@@ -115,6 +117,43 @@ async def queue_run(conn: AsyncConnection, project: dict[str, Any], slot: str, t
     return res.inserted_primary_key[0]
 
 
+_VERDICT = re.compile(r"VERDETTO:\s*(approvato|modifiche)", re.I)
+_CRITERION = re.compile(r"^CRITERIO\s+(\d+):\s*(met|unmet|unknown)\s*[—–-]*\s*(.*)$", re.I | re.M)
+
+
+async def latest_artifact(conn: AsyncConnection, project_id: str, artifact_type: str) -> dict[str, Any] | None:
+    row = (await conn.execute(select(artifacts).where(
+        artifacts.c.project_id == project_id, artifacts.c.artifact_type == artifact_type)
+        .order_by(artifacts.c.version.desc()).limit(1))).mappings().first()
+    return dict(row) if row else None
+
+
+def _artifact_name(bundle: Bundle, artifact_type: str) -> str:
+    return next((a["name"] for a in bundle.process["artifacts"] if a["id"] == artifact_type), artifact_type)
+
+
+def reviewed_types(bundle: Bundle, slot: str) -> list[str]:
+    """Tipi di artefatto che lo slot revisiona: li consuma e il loro produttore lo indica in `reviewedBy`."""
+    consumed = bundle.agents[slot].get("consumes", [])
+    return [t for t in consumed if any(t in a.get("produces", []) and a.get("reviewedBy") == slot for a in bundle.agents.values())]
+
+
+def is_gatekeeper(bundle: Bundle, slot: str, stage_id: str) -> bool:
+    return any(o["stage"] == stage_id and o.get("gateReviewer") == slot for o in bundle.topology["orchestrators"])
+
+
+async def stage_reviews(conn: AsyncConnection, bundle: Bundle, project_id: str, stage_id: str) -> list[dict[str, Any]]:
+    """Revisioni sull'ultima versione di ogni output dello stadio."""
+    out = []
+    for t in bundle.stages[stage_id].get("outputs", []):
+        art = await latest_artifact(conn, project_id, t)
+        if art is None:
+            continue
+        for r in (await conn.execute(select(reviews).where(reviews.c.artifact_id == art["id"]).order_by(reviews.c.id))).mappings():
+            out.append({"artifactType": t, "version": art["version"], "verdict": r["verdict"], "reviewer": r["reviewer_slot"]})
+    return out
+
+
 async def execute_run(run_id: int) -> None:
     async with engine().begin() as conn:
         run = (await conn.execute(select(task_runs).where(task_runs.c.id == run_id))).mappings().first()
@@ -124,16 +163,26 @@ async def execute_run(run_id: int) -> None:
         bundle = catalog().bundle(project["methodology"])
         config, _ = await active_config(conn, project["methodology"])
         await conn.execute(update(task_runs).where(task_runs.c.id == run_id).values(status="running", started_at=utcnow()))
+        agent = bundle.agents[run["slot"]]
+        stage_id = agent["stage"] or project["current_stage"]
+        inputs = []
+        for t in agent.get("consumes", []):
+            art = await latest_artifact(conn, project["id"], t)
+            if art:
+                inputs.append({"type": t, "name": _artifact_name(bundle, t), "version": art["version"], "content": art["content"]})
+        gate = bundle.stages[project["current_stage"]].get("gate")
+        gate_ctx = None
+        if gate and is_gatekeeper(bundle, run["slot"], project["current_stage"]):
+            gate_ctx = {"criteria": gate["criteria"], "reviews": await stage_reviews(conn, bundle, project["id"], project["current_stage"])}
     sa = {s["slot"]: s for s in config["slotAssignments"]}[run["slot"]]
-    agent = bundle.agents[run["slot"]]
     persona = {p["id"]: p for p in config["personas"]}[sa["persona"]]
     preset = {p["id"]: p for p in config["agentPresets"]}.get(sa.get("preset", ""), {})
-    stage_id = agent["stage"] or project["current_stage"]
     context = {
         "projectName": project["name"], "stageName": bundle.stages[stage_id]["name"], "personaName": persona["name"],
         "agentName": sa.get("agentName", agent["name"]), "responsibilities": agent["responsibilities"],
         "autonomy": sa.get("autonomy", agent["autonomy"]), "instructions": sa.get("instructions"),
         "taskName": run["task_name"], "model": preset.get("model"), "fallbackModel": preset.get("fallbackModel"), "temperature": preset.get("temperature", 0.2),
+        "inputs": inputs, "produces": agent.get("produces", []), "reviewer": bool(reviewed_types(bundle, run["slot"])), "gate": gate_ctx,
     }
     try:
         output, status = await run_task(context), "done"
@@ -142,6 +191,35 @@ async def execute_run(run_id: int) -> None:
     async with engine().begin() as conn:
         await conn.execute(update(task_runs).where(task_runs.c.id == run_id).values(
             status=status, output=output, finished_at=utcnow()))
+        if status == "done":
+            await _record_results(conn, project, bundle, run, agent, stage_id, output, gate_ctx)
+
+
+async def _record_results(conn: AsyncConnection, project: dict[str, Any], bundle: Bundle, run: Any, agent: dict[str, Any],
+                          stage_id: str, output: str, gate_ctx: dict[str, Any] | None) -> None:
+    """Salva gli artefatti prodotti, le revisioni fatte e il pacchetto di evidenze del gatekeeper."""
+    pid, now = project["id"], utcnow()
+    for t in agent.get("produces", []):
+        last = (await conn.execute(select(func.max(artifacts.c.version)).where(
+            artifacts.c.project_id == pid, artifacts.c.artifact_type == t))).scalar_one()
+        await conn.execute(insert(artifacts).values(
+            project_id=pid, stage=stage_id, artifact_type=t, slot=run["slot"], version=(last or 0) + 1,
+            content=output, run_id=run["id"], created_at=now))
+    for t in reviewed_types(bundle, run["slot"]):
+        art = await latest_artifact(conn, pid, t)
+        if art is None:
+            continue
+        found_verdicts = _VERDICT.findall(output)  # vale l'ultima: il modello potrebbe ripetere l'istruzione
+        verdict = "approved" if found_verdicts and found_verdicts[-1].lower() == "approvato" else "changes_requested"
+        await conn.execute(insert(reviews).values(
+            project_id=pid, artifact_id=art["id"], artifact_type=t, artifact_version=art["version"], reviewer_slot=run["slot"],
+            task_id=run["task_id"], run_id=run["id"], verdict=verdict, findings=output, created_at=now))
+    if gate_ctx:
+        found = {int(m.group(1)): (m.group(2).lower(), m.group(3).strip()) for m in _CRITERION.finditer(output)}
+        criteria = [{"criterion": c, "status": found.get(i, ("unknown", "Non valutato"))[0],
+                     "evidence": found.get(i, ("unknown", "Non valutato"))[1]} for i, c in enumerate(gate_ctx["criteria"], 1)]
+        await conn.execute(insert(evidence_packs).values(
+            project_id=pid, stage=project["current_stage"], run_id=run["id"], criteria=criteria, created_at=now))
 
 
 async def _log_action(conn: AsyncConnection, project: dict[str, Any], slot: str, task: Any, output: str) -> None:

@@ -15,6 +15,21 @@ Poi apri http://localhost:8080. L'API è su http://localhost:8000/docs.
 
 Di default gli agenti girano in **modalità simulata**: non serve nessuna chiave e non parte nessuna chiamata ai modelli. Per i modelli reali vedi `docs/sviluppo.md`.
 
+## Modalità di deploy
+
+Ananke si può avviare in due modalità, con file compose sovrapponibili:
+
+| Modalità | Cosa avvia | Comando |
+| --- | --- | --- |
+| **Standalone** (default) | Solo Ananke: database, API, worker, console web (più gateway e Ollama con i profili `live` e `local-llm`) | `docker compose up --build` |
+| **Ecosistema** | Ananke più i servizi esterni a cui si collega (work tracker, repository, osservabilità...) | `docker compose -f docker-compose.yml -f docker-compose.ecosystem.yml up --build` |
+
+Per usare sempre l'ecosistema senza ripetere i file, decommenta `COMPOSE_FILE` in `.env`. I profili `live` e `local-llm` si combinano con entrambe le modalità.
+
+Usa lo **standalone** per demo, sviluppo e prove con agenti simulati: non servono chiavi né altri servizi. L'**ecosistema** serve per provare Ananke insieme agli strumenti con cui lavora.
+
+> **Stato**: i servizi dell'ecosistema sono ancora da definire. Oggi `docker-compose.ecosystem.yml` è uno scheletro senza servizi, con le convenzioni da seguire; avviarlo equivale allo standalone. Le scelte aperte sono in `docs/decisioni.md`.
+
 ## Cosa puoi provare
 
 1. **Console**: scegli un progetto dal menu, seleziona una fase e un responsabile, poi premi «Esegui ora» su un compito. Il worker lo esegue entro 30 secondi.
@@ -47,6 +62,8 @@ models/      schemi e modelli JSON (waterfall, scrum): la fonte di verità
 backend/     API FastAPI, validazione, worker cron, agenti LangGraph, test
 frontend/    React + Vite: console e configurazione
 gateway/     configurazione LiteLLM (alias dei modelli)
+docker-compose.yml            modalità standalone (solo Ananke)
+docker-compose.ecosystem.yml  modalità ecosistema (servizi collegati, da definire)
 scripts/     validazione dei modelli da riga di comando
 data/        progetti di esempio caricati al primo avvio
 docs/        architettura, decisioni, roadmap, modello dati, licenze, mockup

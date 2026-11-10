@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { api, ApiError } from '../api'
 import { Avatar, TypeTag } from '../components/Avatar'
 import { describeCron, formatDateTime } from '../cron'
-import type { PersonaDetail, Project, ProjectDetail, RaciColumn } from '../types'
+import { StageWorkPanel } from '../components/StageWorkPanel'
+import type { PersonaDetail, Project, ProjectDetail, RaciColumn, StageWork } from '../types'
 
 const STATUS_LABEL: Record<string, string> = { done: 'completata', active: 'in corso', future: 'da iniziare', continuous: 'continua' }
 const RUN_LABEL: Record<string, string> = { queued: 'in coda', running: 'in esecuzione', done: 'completata', failed: 'errore', skipped: 'saltata' }
@@ -19,6 +20,7 @@ export function Console() {
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)
   const [target, setTarget] = useState('')
+  const [work, setWork] = useState<StageWork | null>(null)
 
   useEffect(() => {
     api.projects().then((ps) => {
@@ -45,6 +47,11 @@ export function Console() {
       const ids = cols.flatMap((c) => c.people.map((p) => p.id))
       setPersonaId((cur) => (ids.includes(cur) ? cur : cols[0]?.people[0]?.id ?? ''))
     }).catch((e) => setError(String(e)))
+  }, [pid, stage, tick])
+
+  useEffect(() => {
+    if (!pid || !stage) return
+    api.stageWork(pid, stage).then(setWork).catch((e) => setError(String(e)))
   }, [pid, stage, tick])
 
   useEffect(() => {
@@ -224,6 +231,8 @@ export function Console() {
           ) : <div className="muted">Seleziona un responsabile.</div>}
         </section>
       </div>
+
+      <StageWorkPanel work={work} stageName={stageName} />
     </div>
   )
 }

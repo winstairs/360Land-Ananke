@@ -182,3 +182,15 @@ export type GatewayStatus = {
   syncMinutes: number
   lastSync: { status: 'ok' | 'error' | 'skipped'; detail: string; catalogVersion: number; checkedAt: string } | null
 }
+
+export type StageArtifact = { id: number; type: string; name: string; version: number; slot: string; content: string; createdAt: string }
+export type StageReview = {
+  id: number; artifactId: number; artifactVersion: number; reviewer: string; taskId: string
+  verdict: 'approved' | 'changes_requested'; findings: string | null; createdAt: string
+}
+export type EvidenceCriterion = { criterion: string; status: 'met' | 'unmet' | 'unknown'; evidence: string }
+export type StageWork = {
+  artifacts: StageArtifact[]
+  reviews: StageReview[]
+  evidence: { criteria: EvidenceCriterion[]; createdAt: string } | null
+}

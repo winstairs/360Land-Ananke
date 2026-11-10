@@ -18,12 +18,12 @@ Obiettivo: la fase Requisiti del progetto «Portale prenotazioni» gira con agen
 Prompt suggerito per Claude Code:
 > Implementa la fase 1 della roadmap. Gli agenti dello stadio requirements devono produrre artefatti reali: salva l'output di ogni esecuzione come artefatto versionato (tabella `artifacts`), passa al compito successivo gli artefatti che consuma, e fai verificare la SRS al requirements-validator-agent prima del gate. Mostra gli artefatti nella console.
 
-- [ ] Tabella `artifacts` con versioni, collegata a esecuzioni e stadi
-- [ ] Gli agenti ricevono in ingresso gli artefatti che consumano (`consumes` nella topologia)
-- [ ] La revisione (`reviewedBy`) avviene prima della consegna al gatekeeper
-- [ ] Il gatekeeper produce un pacchetto di evidenze con lo stato di ogni criterio del gate
-- [ ] La console mostra artefatti, revisioni e pacchetto di evidenze
-- [ ] Test end-to-end in modalità mock; prova manuale in modalità live con `claude-sonnet` e `oss-generalist`
+- [x] Tabella `artifacts` con versioni, collegata a esecuzioni e stadi
+- [x] Gli agenti ricevono in ingresso gli artefatti che consumano (`consumes` nella topologia)
+- [x] La revisione (`reviewedBy`) precede il gatekeeper: senza revisione approvata sull'ultima versione i criteri risultano non soddisfatti
+- [x] Il gatekeeper produce un pacchetto di evidenze con lo stato di ogni criterio del gate
+- [x] La console mostra artefatti, revisioni e pacchetto di evidenze
+- [ ] Test end-to-end in modalità mock (fatto, `test_phase1.py`); prova manuale in modalità live con `claude-sonnet` e `oss-generalist`
 
 ## Fase 2 · Connettori MCP
 

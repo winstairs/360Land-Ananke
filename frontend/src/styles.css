@@ -130,3 +130,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .seg button:disabled { opacity: .5; cursor: not-allowed; }
 .field input[aria-invalid="true"] { border-color: #B33A3A; }
 .stage-tools { border-top: 1px solid var(--line); padding-top: 12px; }
+
+.work-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.work-item pre { margin: 0; white-space: pre-wrap; font-size: 12px; max-height: 240px; overflow: auto; background: var(--ground); padding: 8px; border-radius: 8px; }
+.work-item summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.ev-met { color: var(--avatar-ink); font-weight: 600; }
+.ev-unmet { color: var(--danger); font-weight: 600; }
+.ev-unknown { color: var(--muted); font-weight: 600; }

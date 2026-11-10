@@ -1,4 +1,4 @@
-import type { GatewayStatus, LlmCatalog, ModelBundle, PersonaDetail, PlatformConfig, Project, ProjectDetail, RaciColumn } from './types'
+import type { GatewayStatus, LlmCatalog, ModelBundle, PersonaDetail, PlatformConfig, Project, ProjectDetail, RaciColumn, StageWork } from './types'
 
 export class ApiError extends Error {
   constructor(public status: number, public detail: unknown) {
@@ -21,6 +21,7 @@ export const api = {
   projects: () => req<Project[]>('/projects'),
   project: (id: string) => req<ProjectDetail>(`/projects/${id}`),
   raci: (id: string, stage: string) => req<RaciColumn[]>(`/projects/${id}/stages/${stage}/raci`),
+  stageWork: (id: string, stage: string) => req<StageWork>(`/projects/${id}/stages/${stage}/work`),
   persona: (id: string, persona: string) => req<PersonaDetail>(`/projects/${id}/personas/${persona}`),
   runTask: (id: string, slot: string, taskId: string) =>
     req<{ id: number; message: string }>(`/projects/${id}/runs`, { method: 'POST', body: JSON.stringify({ slot, taskId }) }),

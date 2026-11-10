@@ -10,5 +10,6 @@
   "search.exclude": {
     "**/node_modules": true,
     "frontend/dist": true
-  }
+  },
+  "python.terminal.useEnvFile": true
 }

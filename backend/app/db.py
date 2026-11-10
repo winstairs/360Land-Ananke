@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import JSON, Column, DateTime, Integer, MetaData, String, Table, Text, func, insert, select
+from sqlalchemy import JSON, Column, DateTime, Integer, MetaData, String, Table, Text, UniqueConstraint, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from .settings import settings
@@ -63,6 +63,48 @@ gate_decisions = Table(
     Column("note", Text, nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False, default=utcnow),
     Column("applied_at", DateTime(timezone=True), nullable=True),
+)
+
+# Artefatti prodotti dagli agenti: solo inserimenti, ogni esecuzione crea una nuova versione per (progetto, tipo)
+artifacts = Table(
+    "artifacts", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("project_id", String(64), nullable=False, index=True),
+    Column("stage", String(64), nullable=False),
+    Column("artifact_type", String(64), nullable=False),  # id in process.artifacts
+    Column("slot", String(64), nullable=False),
+    Column("version", Integer, nullable=False),
+    Column("content", Text, nullable=False),
+    Column("run_id", Integer, nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False, default=utcnow),
+    UniqueConstraint("project_id", "artifact_type", "version"),
+)
+
+# Revisioni di una versione di artefatto fatte dall'agente indicato in `reviewedBy`
+reviews = Table(
+    "reviews", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("project_id", String(64), nullable=False, index=True),
+    Column("artifact_id", Integer, nullable=False, index=True),
+    Column("artifact_type", String(64), nullable=False),
+    Column("artifact_version", Integer, nullable=False),
+    Column("reviewer_slot", String(64), nullable=False),
+    Column("task_id", String(64), nullable=False),
+    Column("run_id", Integer, nullable=True),
+    Column("verdict", String(24), nullable=False),  # approved | changes_requested
+    Column("findings", Text, nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False, default=utcnow),
+)
+
+# Pacchetto di evidenze del gatekeeper: stato di ogni criterio del gate dello stadio
+evidence_packs = Table(
+    "evidence_packs", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("project_id", String(64), nullable=False, index=True),
+    Column("stage", String(64), nullable=False),
+    Column("run_id", Integer, nullable=True),
+    Column("criteria", JSON, nullable=False),  # [{criterion, status: met|unmet|unknown, evidence}]
+    Column("created_at", DateTime(timezone=True), nullable=False, default=utcnow),
 )
 
 # Catalogo LLM di piattaforma: solo inserimenti, l'ultima riga è quella attiva (versione 0 = file del repository)

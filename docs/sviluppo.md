@@ -21,6 +21,15 @@ npm ci
 npm run dev                              # http://localhost:5173, proxy /api verso :8000
 ```
 
+## Modalità ecosistema
+
+`docker-compose.ecosystem.yml` si sovrappone a `docker-compose.yml` (vedi il README). Per aggiungere un servizio:
+
+1. Verifica la licenza con `/licenza` e registrala in `docs/licenze.md`: solo Apache-2.0 o MIT; il copyleft solo come servizio esterno raggiunto via API.
+2. Definiscilo in `docker-compose.ecosystem.yml`, con le credenziali da variabili d'ambiente (documentate in `.env.example`) e, se opzionale, sotto un profilo dedicato.
+3. Ananke lo raggiunge solo via API o MCP, a cron o polling: niente bus di eventi né webhook in ingresso.
+4. Verifica che lo standalone parta ancora senza chiavi: `docker compose config`.
+
 ## Modelli reali
 
 1. In `.env`: `LLM_MODE=live`, `ANTHROPIC_API_KEY` e un valore proprio per `LITELLM_SALT_KEY`.

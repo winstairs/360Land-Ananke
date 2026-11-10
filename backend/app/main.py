@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import insert, select
 
-from .db import engine, gate_decisions, gateway_syncs, init_db, task_runs, utcnow
+from .db import artifacts, engine, evidence_packs, gate_decisions, reviews, gateway_syncs, init_db, task_runs, utcnow
 from .services import (active_config, active_llm_catalog, catalog, get_project, list_projects, queue_run, save_config,
                        save_llm_catalog, validate_llm_catalog_change)
 from .settings import settings
@@ -103,6 +103,29 @@ async def project_raci(pid: str, sid: str) -> list[dict[str, Any]]:
             raise HTTPException(404, "Stadio inesistente")
         config, _ = await active_config(conn, p["methodology"])
         return raci_view(b, config, sid)
+
+
+@app.get("/api/projects/{pid}/stages/{sid}/work")
+async def project_stage_work(pid: str, sid: str) -> dict[str, Any]:
+    """Artefatti (tutte le versioni), revisioni e ultimo pacchetto di evidenze dello stadio."""
+    async with engine().connect() as conn:
+        p = await _project_or_404(conn, pid)
+        b = catalog().bundle(p["methodology"])
+        if sid not in b.stages:
+            raise HTTPException(404, "Stadio inesistente")
+        arts = (await conn.execute(select(artifacts).where(artifacts.c.project_id == pid, artifacts.c.stage == sid)
+                                   .order_by(artifacts.c.artifact_type, artifacts.c.version.desc()))).mappings().all()
+        ids = [a["id"] for a in arts]
+        revs = (await conn.execute(select(reviews).where(reviews.c.artifact_id.in_(ids)).order_by(reviews.c.id.desc()))).mappings().all() if ids else []
+        pack = (await conn.execute(select(evidence_packs).where(evidence_packs.c.project_id == pid, evidence_packs.c.stage == sid)
+                                   .order_by(evidence_packs.c.id.desc()).limit(1))).mappings().first()
+        return {
+            "artifacts": [{"id": a["id"], "type": a["artifact_type"], "name": next((x["name"] for x in b.process["artifacts"] if x["id"] == a["artifact_type"]), a["artifact_type"]),
+                           "version": a["version"], "slot": a["slot"], "content": a["content"], "createdAt": _iso(a["created_at"])} for a in arts],
+            "reviews": [{"id": r["id"], "artifactId": r["artifact_id"], "artifactVersion": r["artifact_version"], "reviewer": r["reviewer_slot"],
+                         "taskId": r["task_id"], "verdict": r["verdict"], "findings": r["findings"], "createdAt": _iso(r["created_at"])} for r in revs],
+            "evidence": {"criteria": pack["criteria"], "createdAt": _iso(pack["created_at"])} if pack else None,
+        }
 
 
 @app.get("/api/projects/{pid}/personas/{persona_id}")

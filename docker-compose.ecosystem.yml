@@ -1,0 +1,18 @@
+# Modalità ecosistema: si sovrappone a docker-compose.yml e aggiunge i servizi a cui Ananke si collega.
+#   docker compose -f docker-compose.yml -f docker-compose.ecosystem.yml up --build
+# In alternativa, in .env:  COMPOSE_FILE=docker-compose.yml:docker-compose.ecosystem.yml
+#
+# I componenti dell'ecosistema sono ancora da definire (vedi docs/decisioni.md, decisioni aperte).
+# Convenzioni per i servizi che verranno aggiunti qui:
+#   - Ananke li raggiunge solo via API o MCP, a polling/cron: niente bus di eventi né webhook in ingresso.
+#   - Licenza: Apache-2.0 o MIT; i servizi copyleft (es. OpenProject, GPLv3) solo come servizi esterni via API.
+#   - Verifica con /licenza e registra in docs/licenze.md prima di aggiungere un'immagine.
+#   - Credenziali solo da variabili d'ambiente (.env), mai nel file.
+#   - Servizi opzionali sotto un profilo dedicato.
+name: ananke
+
+# Candidati da valutare (nessuno attivo):
+#   - work tracker: Jira (Rovo MCP) oppure OpenProject
+#   - repository: GitHub
+#   - osservabilità: Langfuse o OpenTelemetry
+services: {}

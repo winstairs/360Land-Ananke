@@ -53,3 +53,9 @@ Si modifica dalla scheda «Modelli AI». Il worker pubblica sul gateway LiteLLM 
 - ruoli del processo assegnati solo a persone umane;
 - avatar con preset eseguibile; cron validi; revisione da famiglia di modelli diversa, con le famiglie lette dal catalogo LLM;
 - preset che puntano a modelli attivi del catalogo; catalogo con alias unici, indirizzi e nomi delle variabili delle chiavi validi.
+
+## Tabelle del database (fase 1)
+
+- `artifacts`: versioni degli artefatti prodotti dagli agenti (`produces`), per progetto e tipo, con stadio, slot ed esecuzione di origine. Gli agenti ricevono l'ultima versione degli artefatti che consumano (`consumes`).
+- `reviews`: revisione di una versione di artefatto da parte dello slot indicato in `reviewedBy`, con verdetto (`approved` o `changes_requested`) letto dalla riga «VERDETTO:» dell'output.
+- `evidence_packs`: pacchetto del gatekeeper con lo stato (`met`, `unmet`, `unknown`) di ogni criterio del gate dello stadio. È un'informazione per chi approva, non un blocco.
